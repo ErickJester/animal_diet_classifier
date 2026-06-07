@@ -48,6 +48,62 @@ pip install -r requirements.txt
 
 ## 2) Preparar el dataset
 
+Tienes dos caminos: descargarlo automáticamente (recomendado si partes de cero)
+o armarlo a mano.
+
+### Opción A — descargar automáticamente (`download.py`)
+
+Trae imágenes en **dos fases** y las deja en `downloads/<dieta>/`, ya organizadas
+por dieta (las especies sin dieta conocida van a `downloads/_unsorted/`):
+
+```bash
+# Fase A — datasets masivos (Kaggle / Hugging Face / Roboflow)
+python download.py datasets
+python download.py datasets --only animals90 mammals45   # solo algunas fuentes
+
+# Fase B — suplemento con especie verificada (iNaturalist), SOLO tras la fase A
+python download.py more
+python download.py more --per-species 60                 # tope por especie
+
+# Todo de una / estado / catálogo de fuentes
+python download.py all
+python download.py status
+python download.py sources
+```
+
+En cada ejecución **no repite**: salta los datasets ya descargados y, a nivel
+imagen, descarta duplicados exactos por hash (registro en
+`curator/data/download_manifest.json`). La fase B respeta un tope por especie,
+así que volver a correrla solo trae lo que falta.
+
+La fase B usa la **API pública de observaciones de iNaturalist** (sin token):
+al pedir fotos *por especie* con identificación verificada por la comunidad
+("research grade"), toda imagen es con certeza ese animal — evita el ruido de un
+buscador genérico. La dieta sale de `curator/data/diet_labels.json`; amplíalo
+para cubrir más especies.
+
+**Fuentes masivas (fase A).** Cada una usa su herramienta oficial; si falta el
+paquete o las credenciales, esa fuente se omite con un aviso y el resto sigue:
+
+| Fuente     | Requiere                                             |
+|------------|------------------------------------------------------|
+| Kaggle     | `pip install kaggle` + `~/.kaggle/kaggle.json`       |
+| Hugging Face | `pip install huggingface_hub`                      |
+| Roboflow   | `pip install roboflow` + variable `ROBOFLOW_API_KEY` |
+
+**Red corporativa (proxy/TLS).** Si ves `CERTIFICATE_VERIFY_FAILED`, define
+`REQUESTS_CA_BUNDLE` con el CA de tu empresa, o usa `--insecure` (omite la
+verificación TLS; solo en redes de confianza):
+
+```bash
+python download.py more --insecure
+```
+
+> Lo descargado **no** entra al dataset todavía: queda en `downloads/`. La
+> curación (deduplicado fino) y el reparto train/val son pasos posteriores.
+
+### Opción B — manual
+
 Coloca tus imágenes en carpetas por clase. El nombre de la carpeta es la etiqueta:
 
 ```

@@ -24,6 +24,7 @@ class DietLabels:
     """Mapa nombre→dieta. Acepta tanto nombre científico como común (case-insensitive)."""
 
     def __init__(self, mapping: Dict[str, str]) -> None:
+        self.raw = dict(mapping)                                # conserva la grafía original
         self._by_name = {k.lower(): v for k, v in mapping.items()}
 
     def get(self, scientific_name: str, common_name: str = "") -> Optional[str]:

@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Imágenes descargadas / datasets (pueden ser cientos de MB)
+downloads/
+
+# Artefactos generados por el curador y el descargador
+curator/data/download_manifest.json
+curator/data/species_registry.json
+curator/data/embeddings.npz
+
+# Pesos entrenados
+weights/*.pt
+
+# Imágenes dentro del dataset (se mantienen las carpetas vía .gitkeep)
+dataset/train/*/*
+dataset/val/*/*
+!dataset/**/.gitkeep

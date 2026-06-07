@@ -48,3 +48,22 @@ TARGET_PER_SPECIES = 60  # nº de fotos deseado por especie; alcanzado → desca
 
 # ── división al hacer commit del staging al dataset ──────────────────────────────
 VAL_RATIO = 0.2          # ~20% de lo aceptado va a val/, el resto a train/
+
+# ── descarga de imágenes (downloader) ────────────────────────────────────────────
+# Las imágenes descargadas NO van directo al dataset: aterrizan aquí, ya
+# organizadas por dieta cuando se conoce la especie. La curación es un paso aparte.
+DOWNLOADS_DIR = ROOT / "downloads"             # destino de lo descargado (por dieta)
+RAW_DIR       = DOWNLOADS_DIR / "_raw"         # datasets masivos crudos antes de reorganizar
+UNSORTED_DIR  = DOWNLOADS_DIR / "_unsorted"    # especies sin dieta conocida (revisar a mano)
+MANIFEST_PATH = DATA_DIR / "download_manifest.json"  # registro ligero anti-repetición
+
+# Fase 2 (suplemento desde fuentes con especie verificada):
+SUPP_PER_SPECIES = 40                           # tope de fotos por especie al suplementar
+INAT_PAGE_SIZE   = 50                           # observaciones por página (máx. API: 200)
+INAT_MAX_PAGES   = 20                           # cota de seguridad por especie
+INAT_LICENSES    = "cc0,cc-by,cc-by-nc"         # solo fotos con licencia reutilizable
+INAT_OBS_URL     = "https://api.inaturalist.org/v1/observations"  # endpoint público (sin token)
+
+# HTTP común a las descargas:
+HTTP_TIMEOUT    = 30.0
+HTTP_USER_AGENT = "animal-diet-classifier/1.0 (dataset downloader)"
