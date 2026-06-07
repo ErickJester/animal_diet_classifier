@@ -59,6 +59,7 @@ MANIFEST_PATH = DATA_DIR / "download_manifest.json"  # registro ligero anti-repe
 
 # Fase 2 (suplemento desde fuentes con especie verificada):
 SUPP_PER_SPECIES = 40                           # tope de fotos por especie al suplementar
+DOWNLOAD_WORKERS = 16                            # descargas HTTP en paralelo (el cuello es la red)
 INAT_PAGE_SIZE   = 50                           # observaciones por página (máx. API: 200)
 INAT_MAX_PAGES   = 20                           # cota de seguridad por especie
 INAT_LICENSES    = "cc0,cc-by,cc-by-nc"         # solo fotos con licencia reutilizable

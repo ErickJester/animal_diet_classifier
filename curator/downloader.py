@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import hashlib
 import re
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, Iterator, List, Optional, Tuple
@@ -135,6 +136,14 @@ class DatasetDownloader:
             print(f"No puedo usar iNaturalist: {problema}")
             return
 
+        # Reconstruye el estado desde lo que ya está en disco. Hace la descarga
+        # reanudable: si una corrida previa se cortó antes de guardar el
+        # manifiesto, no se vuelve a bajar ni se duplica lo que ya tenemos.
+        recuperadas = self._reconcile_with_disk()
+        if recuperadas:
+            print(f"(reconciliadas {recuperadas} imágenes ya presentes en disco)")
+        self.manifest.save()
+
         print(f"Suplementando hasta {target} fotos por especie desde iNaturalist (verificadas)\n")
         total = 0
         for species, diet in species_list:
@@ -146,29 +155,78 @@ class DatasetDownloader:
             total += got
             estado = f"+{got}" if got else "sin nuevas"
             print(f"  {species:<28} [{diet:<9}] {estado}  (acumulado {have + got})")
+            self.manifest.save()   # incremental: una interrupción pierde, a lo sumo, una especie
 
         self.manifest.save()
         print(f"\nTotal suplementado en esta pasada: {total}")
         print(f"Imágenes en: {config.DOWNLOADS_DIR}")
 
+    def _reconcile_with_disk(self) -> int:
+        """
+        Sincroniza el manifiesto con las imágenes ya descargadas en downloads/.
+
+        Recorre las fotos de iNaturalist (nombre 'Genus_species_<photoid>.jpg'),
+        registra su id y hash (para no re-bajarlas ni duplicarlas) y reconstruye
+        el conteo por especie (para respetar el tope). Idempotente: solo hashea
+        las que aún no constaban como vistas.
+        """
+        counts: Dict[str, int] = {}
+        recuperadas = 0
+        for diet in config.DIET_CLASSES:
+            folder = config.DOWNLOADS_DIR / diet
+            if not folder.is_dir():
+                continue
+            for f in sorted(folder.iterdir()):
+                if f.suffix.lower() not in config.IMG_EXTS:
+                    continue
+                parts = f.stem.split("_")
+                if not (parts and parts[-1].isdigit()):
+                    continue   # no tiene el patrón de foto iNaturalist
+                pid, species = parts[-1], " ".join(parts[:-1])
+                counts[species] = counts.get(species, 0) + 1
+                if not self.manifest.seen_photo("inaturalist", pid):
+                    self.manifest.add_photo("inaturalist", pid)
+                    try:
+                        self.manifest.add_hash(hashlib.md5(f.read_bytes()).hexdigest())
+                    except Exception:
+                        pass
+                    recuperadas += 1
+        # el conteo de disco manda (refleja lo realmente colocado)
+        for species, n in counts.items():
+            if n > self.manifest.species_count(species):
+                self.manifest.species[species] = n
+        return recuperadas
+
     def _pull_inaturalist(self, species: str, diet: str, need: int) -> int:
+        # 1. Reunir candidatos aún no vistos (paginación rápida, secuencial).
+        #    Pedimos de más por si hay duplicados visuales o bajadas fallidas.
+        candidates = [
+            (pid, url)
+            for pid, url in iter_inaturalist_photos(species, max_photos=need * 3)
+            if not self.manifest.seen_photo("inaturalist", pid)
+        ]
+        if not candidates:
+            return 0
+
+        # 2. Descargar en paralelo por lotes (la red es el cuello de botella),
+        #    pero procesar los resultados en ESTE hilo: así el manifiesto y la
+        #    escritura a disco quedan libres de condiciones de carrera.
         got = 0
-        # pedimos algo de más por si hay fotos repetidas/ya vistas
-        for pid, url in iter_inaturalist_photos(species, max_photos=need * 3):
-            if got >= need:
-                break
-            if self.manifest.seen_photo("inaturalist", pid):
-                continue
-            data = download_url(url)
-            self.manifest.add_photo("inaturalist", pid)  # visto, aunque falle la bajada
-            if not data:
-                continue
-            stats = PhaseStats()
-            placed = self._place(data, species=species, stem=pid, ext=".jpg",
-                                 stats=stats, known_diet=diet)
-            if placed == "saved":
-                self.manifest.add_species(species)
-                got += 1
+        stats = PhaseStats()
+        workers = config.DOWNLOAD_WORKERS
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            for start in range(0, len(candidates), workers):
+                if got >= need:
+                    break
+                chunk = candidates[start:start + workers]
+                for pid, data in pool.map(lambda c: (c[0], download_url(c[1])), chunk):
+                    self.manifest.add_photo("inaturalist", pid)  # visto, aun si falló
+                    if got >= need or not data:
+                        continue
+                    if self._place(data, species=species, stem=pid, ext=".jpg",
+                                   stats=stats, known_diet=diet) == "saved":
+                        self.manifest.add_species(species)
+                        got += 1
         return got
 
     # ── colocación de una imagen con dedup por hash ────────────────────────────

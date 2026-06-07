@@ -15,6 +15,6 @@ requests>=2.25.0
 # La fase B (suplemento desde iNaturalist) solo necesita 'requests', ya incluido.
 # La fase A (datasets masivos) usa estos paquetes según la fuente; si falta uno,
 # esa fuente se omite con aviso y el resto continúa. Descoméntalos si los usas:
-# kaggle>=1.6.0            # datasets de Kaggle (requiere ~/.kaggle/kaggle.json)
+kaggle>=1.6.0              # datasets de Kaggle (requiere ~/.kaggle/kaggle.json)
 # huggingface_hub>=0.20.0 # datasets de Hugging Face
 # roboflow>=1.1.0         # datasets de Roboflow (requiere ROBOFLOW_API_KEY)
