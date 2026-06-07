@@ -1,4 +1,12 @@
+# Deep Learning - CNN ResNet
 torch>=2.0.0
 torchvision>=0.15.0
-opencv-python>=4.10.0
+
+# Visión por computadora
+opencv-python>=4.5.0
+
+# Computación científica
 numpy>=1.24.0
+
+# Cliente HTTP para API de iNaturalist (curador - opcional pero recomendado)
+requests>=2.25.0

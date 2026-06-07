@@ -18,6 +18,15 @@ animal_diet_classifier/
 ├── classifier.py          # DietClassifier (inferencia con cascada ResNet-18/50)
 ├── train_classifier.py    # entrenamiento
 ├── predict.py             # CLI para clasificar una o varias fotos
+├── curate.py              # CLI del curador de dataset (index/curate/status/commit)
+├── curator/               # paquete del curador (ver "Curador de dataset" abajo)
+│   ├── config.py          #   umbrales, rutas y constantes
+│   ├── embeddings.py      #   extractor de embeddings visuales (ResNet feature)
+│   ├── index.py           #   índice de similitud (coseno, persistente)
+│   ├── inaturalist.py     #   identificación de especie vía API (opcional)
+│   ├── registry.py        #   registro de especies + etiquetas de dieta
+│   ├── curator.py         #   orquestador de la cascada (opción C)
+│   └── data/              #   diet_labels.json + índice/registro generados
 ├── requirements.txt
 ├── dataset/               # (vacío) imágenes etiquetadas por carpeta
 │   ├── train/{carnivore,herbivore,omnivore}/
@@ -99,3 +108,73 @@ if clf.is_available:
 
 Si torch/torchvision no están instalados o faltan los pesos, `clf.is_available`
 es `False` y nada lanza excepción al importar.
+
+---
+
+## Curador de dataset
+
+Herramienta para **armar y mantener el dataset** sin acumular duplicados ni
+fotos de más de una misma especie. Pensado para alimentar el dataset con
+imágenes nuevas (p. ej. descargadas de iNaturalist) filtrando automáticamente
+lo que ya tenemos.
+
+### Cómo decide (cascada "opción C")
+
+Para cada foto candidata:
+
+1. **Etapa 1 — similitud visual** (rápida, offline). Calcula un *embedding* con
+   un ResNet preentrenado y lo compara con todo lo que ya está en el índice.
+   - similitud ≥ `0.95` → **descarta** (casi idéntica a una que ya tenemos).
+   - similitud < `0.80` → casi seguro especie nueva → pasa a la Etapa 2.
+2. **Etapa 2 — identificación de especie** (vía iNaturalist, solo para las que
+   sobreviven a la Etapa 1).
+   - especie con cupo lleno (`60` fotos) → **descarta**.
+   - especie con cupo libre → **acepta**.
+
+Al aceptar, la imagen se **copia a `curator/staging/`** (no toca el dataset
+directamente): por dieta si se conoce, o a `_pending_review/` (especie sin
+dieta asignada) / `_unidentified/` (sin especie). Tú revisas y confirmas con
+`commit`.
+
+> La dieta nunca se adivina: sale de `curator/data/diet_labels.json` (editable a
+> mano). Si una especie no está ahí, su foto queda en `_pending_review/` hasta
+> que le asignes la dieta.
+
+### Uso
+
+```bash
+# 1) Indexar lo que ya tienes en dataset/ (hazlo una vez al principio)
+python curate.py index
+
+# 2) Curar imágenes nuevas (archivos o carpetas; recursivo)
+python curate.py curate descargas_inaturalist/
+
+# 3) Ver estado (índice, especies, pendientes)
+python curate.py status
+
+# 4) Mover lo aceptado (con dieta) al dataset, repartido train/val
+python curate.py commit
+```
+
+### Identificación de especie (opcional)
+
+La Etapa 2 usa la **API de visión de iNaturalist**, que requiere un token
+gratuito. Sin token, el curador degrada con elegancia y decide **solo por
+similitud visual**.
+
+1. Inicia sesión en iNaturalist y obtén tu token: <https://www.inaturalist.org/users/api_token>
+2. Pásalo por variable de entorno o por flag:
+
+```bash
+# PowerShell
+$env:INATURALIST_API_TOKEN = "tu_token"
+python curate.py curate fotos/
+
+# o directo
+python curate.py curate fotos/ --inat-token "tu_token"
+```
+
+### Ajustes
+
+Todos los umbrales (similitud de duplicado, cupo por especie, ratio train/val,
+backbone de embeddings) están en un único sitio: `curator/config.py`.
