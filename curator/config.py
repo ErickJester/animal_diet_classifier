@@ -41,10 +41,10 @@ IMAGENET_STD  = [0.229, 0.224, 0.225]
 # ── umbrales de la cascada (opción C) ────────────────────────────────────────────
 # Etapa 1 — similitud visual (coseno sobre embeddings normalizados L2):
 DUPLICATE_SIM   = 0.95   # >= → casi idéntica a una que ya tenemos → descartar
-NEW_SPECIES_SIM = 0.80   # <  → visualmente distinta a todo → casi seguro especie nueva
+NEW_SPECIES_SIM = 0.95   # <  → visualmente distinta a todo → casi seguro especie nueva
 
 # Etapa 2 — por especie:
-TARGET_PER_SPECIES = 60  # nº de fotos deseado por especie; alcanzado → descartar nuevas
+TARGET_PER_SPECIES = 175  # nº de fotos deseado por especie; alcanzado → descartar nuevas
 
 # ── división al hacer commit del staging al dataset ──────────────────────────────
 VAL_RATIO = 0.2          # ~20% de lo aceptado va a val/, el resto a train/
