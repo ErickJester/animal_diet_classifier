@@ -24,6 +24,8 @@ Requisitos:
 
 from __future__ import annotations
 
+__version__ = "1.1.0"  # 1.0 fetchers Kaggle/HF/Roboflow + iNat · 1.1 soporte paralelización
+
 import os
 import warnings
 from dataclasses import dataclass

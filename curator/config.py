@@ -7,6 +7,8 @@ desde aquí para evitar valores mágicos dispersos.
 
 from __future__ import annotations
 
+__version__ = "1.3.0"  # 1.0 rutas/umbrales base · 1.1 config descarga · 1.2 DOWNLOAD_WORKERS · 1.3 NEW_SPECIES_SIM+TARGET_PER_SPECIES
+
 from pathlib import Path
 
 # ── raíz del proyecto ──────────────────────────────────────────────────────────

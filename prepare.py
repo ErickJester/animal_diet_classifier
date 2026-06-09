@@ -28,6 +28,8 @@ dataset/). Copia (no mueve), así la fuente queda intacta para re-correr.
 
 from __future__ import annotations
 
+__version__ = "1.0.0"  # 1.0 split train/val desde staging o downloads
+
 import argparse
 import json
 import shutil
@@ -230,6 +232,7 @@ def parse_args():
 
 
 def main():
+    print(f"prepare.py v{__version__}")
     args = parse_args()
 
     if not 0 < args.val_ratio < 1:

@@ -23,6 +23,8 @@ fina (similitud visual) y el reparto train/val son pasos posteriores.
 
 from __future__ import annotations
 
+__version__ = "1.1.0"  # 1.0 fase A+B secuencial · 1.1 ThreadPoolExecutor + reconcile
+
 import hashlib
 import re
 from concurrent.futures import ThreadPoolExecutor

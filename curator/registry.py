@@ -13,6 +13,8 @@ DietLabels     — mapa "nombre → dieta". Es la fuente de verdad de la dieta: 
 
 from __future__ import annotations
 
+__version__ = "1.0.1"  # 1.0 SpeciesRegistry + DietLabels · 1.0.1 sync con downloader
+
 import json
 from pathlib import Path
 from typing import Dict, ItemsView, Optional

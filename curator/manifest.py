@@ -19,6 +19,8 @@ serializan como listas ordenadas.
 
 from __future__ import annotations
 
+__version__ = "1.0.1"  # 1.0 dedup por hash+id+especie · 1.0.1 save() incremental
+
 import json
 import time
 from pathlib import Path

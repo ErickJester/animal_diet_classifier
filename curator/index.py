@@ -14,6 +14,8 @@ mucho mayores convendría un índice ANN (faiss/annoy).
 
 from __future__ import annotations
 
+__version__ = "1.0.0"  # 1.0 índice coseno persistente en npz
+
 from pathlib import Path
 from typing import List, Optional, Tuple
 

@@ -19,6 +19,8 @@ Si torch/torchvision no están instalados, o si los pesos no existen,
 
 from __future__ import annotations
 
+__version__ = "1.0.0"  # 1.0 cascada ResNet-18/50 con umbral de confianza
+
 import os
 from dataclasses import dataclass
 from typing import Optional, Tuple, Union

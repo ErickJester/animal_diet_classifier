@@ -27,6 +27,8 @@ de observaciones). Las fuentes masivas sí requieren sus paquetes/credenciales;
 si faltan, esa fuente se omite con un aviso y el resto continúa.
 """
 
+__version__ = "1.1.0"  # 1.0 fase A+B · 1.1 paralelización + reconcile
+
 import argparse
 import os
 import sys
@@ -143,6 +145,7 @@ def parse_args():
 
 
 def main():
+    print(f"download.py v{__version__}")
     args = parse_args()
     dispatch = {
         "datasets": cmd_datasets,

@@ -18,6 +18,8 @@ Requiere dataset con imágenes etiquetadas por carpeta:
 Referencia: classifier.py
 """
 
+__version__ = "1.0.0"  # 1.0 fine-tuning ResNet-18/50 desde ImageNet
+
 import argparse
 import sys
 from collections import Counter
@@ -257,6 +259,7 @@ def parse_args():
 
 
 def main():
+    print(f"train_classifier.py v{__version__}")
     args = parse_args()
 
     if args.output is None:

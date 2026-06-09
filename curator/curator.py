@@ -24,6 +24,8 @@ Etapa 2 se salta y la decisión se toma solo con la similitud visual.
 
 from __future__ import annotations
 
+__version__ = "1.0.0"  # 1.0 cascada similitud visual → especie (opción C)
+
 import shutil
 from dataclasses import dataclass
 from pathlib import Path

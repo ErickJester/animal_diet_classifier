@@ -23,6 +23,8 @@ Opciones:
 
 from __future__ import annotations
 
+__version__ = "1.0.0"  # 1.0 k-fold estratificado desde pesos fine-tuned
+
 import argparse
 import random
 import sys
@@ -396,6 +398,7 @@ def parse_args():
 
 
 def main():
+    print(f"crossval_classifier.py v{__version__}")
     args = parse_args()
     if args.weights is None:
         args.weights = f"weights/diet_{args.arch}.pt"

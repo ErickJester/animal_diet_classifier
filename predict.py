@@ -12,6 +12,8 @@ la clase predicha (carnivore | herbivore | omnivore) con su confianza.
 Requiere pesos entrenados en weights/diet_resnet18.pt y/o weights/diet_resnet50.pt.
 """
 
+__version__ = "1.0.0"  # 1.0 CLI de inferencia sobre fotos o carpetas
+
 import argparse
 import sys
 from pathlib import Path
@@ -45,6 +47,7 @@ def parse_args():
 
 
 def main():
+    print(f"predict.py v{__version__}")
     args = parse_args()
 
     clf = DietClassifier(device=args.device)

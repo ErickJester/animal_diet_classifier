@@ -15,6 +15,8 @@ Si torch/torchvision no están instalados, `is_available` es False.
 
 from __future__ import annotations
 
+__version__ = "1.0.0"  # 1.0 extractor ResNet sin capa final (ImageNet)
+
 import cv2
 import numpy as np
 

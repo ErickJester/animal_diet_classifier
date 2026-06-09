@@ -22,9 +22,12 @@ especie es opcional: define INATURALIST_API_TOKEN o pasa --inat-token para
 activarla; sin token, el curador decide solo por similitud visual.
 """
 
+__version__ = "1.2.0"  # 1.0 index/curate/status/commit + timer · 1.1 reidentify subcommand · 1.2 version print + fix __future__
+
 import argparse
 import shutil
 import sys
+import time
 from pathlib import Path
 
 from curator import DatasetCurator
@@ -70,6 +73,7 @@ def cmd_index(args):
 
 def cmd_curate(args):
     curator = _build_curator(args)
+    t_start = time.time()
 
     if not curator.identifier.is_available:
         print("NOTA: iNaturalist no disponible (sin token o sin 'requests').")
@@ -95,8 +99,9 @@ def cmd_curate(args):
         print(f"{img_path.name[:34]:<34} {res.decision:<8} {res.similarity:>5.2f}  {detail}")
 
     curator.save()
+    elapsed = time.time() - t_start
     print("─" * 78)
-    print(f"Aceptadas: {kept}   Descartadas: {skipped}")
+    print(f"Aceptadas: {kept}   Descartadas: {skipped}   Tiempo: {elapsed:.1f}s")
     print(f"Las aceptadas están en: {config.STAGING_DIR}")
     print("Revisa y luego ejecuta:  python curate.py commit")
 
@@ -122,6 +127,77 @@ def cmd_status(args):
         print(f"    {diet:<14} {_count_images(config.STAGING_DIR / diet):>4}")
     print(f"    _pending_review {_count_images(config.PENDING_REVIEW_DIR):>4}  (especie conocida, dieta sin definir)")
     print(f"    _unidentified   {_count_images(config.UNIDENTIFIED_DIR):>4}  (visualmente nuevas, sin especie)")
+
+
+# ── subcomando: reidentify ───────────────────────────────────────────────────────
+
+def cmd_reidentify(args):
+    """Re-identifica con iNaturalist las imágenes ya acumuladas en _unidentified/.
+
+    Solo toca curator/staging/_unidentified/ (imágenes que el curado dejó sin
+    especie por no haber token). No recalcula embeddings ni revisa el resto del
+    dataset: por cada imagen pregunta a iNaturalist y, si la identifica, la mueve
+    a staging/<dieta>/ (dieta conocida) o a _pending_review/<especie>/ (sin dieta).
+    Las que iNaturalist no reconozca se quedan donde están.
+    """
+    curator = _build_curator(args, require_model=False)
+    t_start = time.time()
+
+    if not curator.identifier.is_available:
+        print("ERROR: iNaturalist no disponible (falta token o 'requests').")
+        print("  Exporta INATURALIST_API_TOKEN o pasa --inat-token.")
+        sys.exit(1)
+
+    src_dir = config.UNIDENTIFIED_DIR
+    images = sorted(f for f in src_dir.iterdir()
+                    if f.suffix.lower() in config.IMG_EXTS) if src_dir.is_dir() else []
+    if not images:
+        print(f"No hay imágenes en {src_dir}")
+        return
+    if args.limit:
+        images = images[:args.limit]
+
+    moved_diet = moved_pending = no_id = 0
+    print(f"Re-identificando {len(images)} imágenes de {src_dir}\n")
+    print(f"{'archivo':<34} {'resultado':<14} especie / dieta")
+    print("─" * 78)
+    try:
+        for i, f in enumerate(images, 1):
+            guess = curator.identifier.identify(str(f))
+            if guess is None:
+                no_id += 1
+                print(f"{f.name[:34]:<34} {'sin_id':<14}")
+                continue
+
+            species, common = guess.scientific_name, guess.common_name
+            diet = curator.diet_labels.get(species, common)
+
+            if diet in config.DIET_CLASSES:
+                dest_dir = config.STAGING_DIR / diet
+                moved_diet += 1
+            else:
+                dest_dir = config.PENDING_REVIEW_DIR / curator._safe(species)
+                diet = None
+                moved_pending += 1
+            dest_dir.mkdir(parents=True, exist_ok=True)
+
+            dest = _unique(dest_dir, f.with_name(f"{curator._safe(species)}_{f.name}"))
+            shutil.move(str(f), str(dest))
+            curator.registry.add(species, common, diet)
+
+            print(f"{f.name[:34]:<34} {(diet or 'pending'):<14} {species}")
+            if i % 50 == 0:
+                curator.registry.save()
+    except KeyboardInterrupt:
+        print("\nInterrumpido — guardando progreso...")
+
+    curator.registry.save()
+    elapsed = time.time() - t_start
+    print("─" * 78)
+    print(f"A dieta: {moved_diet}   A _pending_review: {moved_pending}   "
+          f"Sin identificar: {no_id}   Tiempo: {elapsed:.1f}s")
+    print(f"Restan en _unidentified: {_count_images(src_dir)}")
+    print("Luego ejecuta:  python curate.py commit")
 
 
 # ── subcomando: commit ──────────────────────────────────────────────────────────
@@ -192,6 +268,11 @@ def parse_args():
     p_curate = sub.add_parser("curate", help="cura imágenes/carpetas nuevas")
     p_curate.add_argument("inputs", nargs="+", help="foto(s) o carpeta(s) a curar")
 
+    p_reid = sub.add_parser("reidentify",
+                            help="re-identifica _unidentified/ con iNaturalist")
+    p_reid.add_argument("--limit", type=int, default=0,
+                        help="nº máx. de imágenes a procesar (0 = todas)")
+
     sub.add_parser("status", help="muestra el estado del curador")
     sub.add_parser("commit", help="mueve lo aceptado al dataset (train/val)")
 
@@ -199,12 +280,14 @@ def parse_args():
 
 
 def main():
+    print(f"curate.py v{__version__}")
     args = parse_args()
     dispatch = {
-        "index":  cmd_index,
-        "curate": cmd_curate,
-        "status": cmd_status,
-        "commit": cmd_commit,
+        "index":      cmd_index,
+        "curate":     cmd_curate,
+        "reidentify": cmd_reidentify,
+        "status":     cmd_status,
+        "commit":     cmd_commit,
     }
     dispatch[args.command](args)
 
