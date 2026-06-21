@@ -18,12 +18,20 @@ Requiere dataset con imágenes etiquetadas por carpeta:
 Referencia: classifier.py
 """
 
-__version__ = "1.0.0"  # 1.0 fine-tuning ResNet-18/50 desde ImageNet
+__version__ = "1.1.0"  # 1.0 fine-tuning ResNet-18/50 · 1.1 AMP + num-workers + UTF-8
 
 import argparse
 import sys
 from collections import Counter
 from pathlib import Path
+
+# La consola de Windows suele ser cp1252 y no traga caracteres de caja/acentos
+# (el bucle imprime '✓' y '─'). Forzamos UTF-8 para no reventar al imprimir.
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
 
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
@@ -98,6 +106,26 @@ def make_weighted_sampler(dataset: ImageFolder) -> WeightedRandomSampler:
     return WeightedRandomSampler(weights, num_samples=len(weights), replacement=True)
 
 
+# ── precisión mixta (AMP) ─────────────────────────────────────────────────────
+
+def _make_amp(use_amp: bool):
+    """
+    Devuelve (scaler, autocast_ctx) compatibles con la API nueva (torch.amp,
+    torch>=2.3) y la antigua (torch.cuda.amp). Si use_amp es False, ambos son
+    no-ops, así el bucle de entrenamiento es idéntico con o sin AMP.
+    """
+    from contextlib import nullcontext
+    try:                                   # API nueva (recomendada)
+        from torch.amp import GradScaler, autocast
+        scaler = GradScaler("cuda", enabled=use_amp)
+        ctx = (lambda: autocast("cuda")) if use_amp else nullcontext
+    except (ImportError, TypeError):       # API antigua (torch < 2.3)
+        from torch.cuda.amp import GradScaler, autocast
+        scaler = GradScaler(enabled=use_amp)
+        ctx = (lambda: autocast()) if use_amp else nullcontext
+    return scaler, ctx
+
+
 # ── entrenamiento ─────────────────────────────────────────────────────────────
 
 def train(args):
@@ -124,11 +152,13 @@ def train(args):
         print(f"ADVERTENCIA: orden de clases {train_ds.classes} != esperado {expected}")
         print("  El modelo usará el orden del directorio — asegúrate que coincide con classifier.py")
 
-    sampler    = make_weighted_sampler(train_ds)
-    train_dl   = DataLoader(train_ds, batch_size=args.batch_size, sampler=sampler,
-                            num_workers=0, pin_memory=True)
-    val_dl     = DataLoader(val_ds, batch_size=args.batch_size, shuffle=False,
-                            num_workers=0) if val_ds else None
+    sampler   = make_weighted_sampler(train_ds)
+    loader_kw = dict(num_workers=args.num_workers, pin_memory=True)
+    if args.num_workers > 0:
+        loader_kw["persistent_workers"] = True   # evita recrear workers cada época
+    train_dl  = DataLoader(train_ds, batch_size=args.batch_size, sampler=sampler, **loader_kw)
+    val_dl    = DataLoader(val_ds, batch_size=args.batch_size, shuffle=False,
+                           **loader_kw) if val_ds else None
 
     # dispositivo
     if args.device:
@@ -158,6 +188,11 @@ def train(args):
     )
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs)
 
+    # precisión mixta (AMP): acelera y reduce memoria en GPU CUDA. Solo activa ahí.
+    use_amp = bool(args.amp and device.type == "cuda")
+    scaler, autocast_ctx = _make_amp(use_amp)
+    print(f"AMP (precisión mixta): {'activada' if use_amp else 'desactivada'}")
+
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -172,10 +207,12 @@ def train(args):
         for imgs, labels in train_dl:
             imgs, labels = imgs.to(device), labels.to(device)
             optimizer.zero_grad()
-            out  = model(imgs)
-            loss = criterion(out, labels)
-            loss.backward()
-            optimizer.step()
+            with autocast_ctx():
+                out  = model(imgs)
+                loss = criterion(out, labels)
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
             train_loss    += loss.item() * imgs.size(0)
             train_correct += (out.argmax(1) == labels).sum().item()
 
@@ -248,7 +285,11 @@ def parse_args():
     parser.add_argument("--data-dir",        default="dataset")
     parser.add_argument("--epochs",          type=int,   default=30)
     parser.add_argument("--batch-size",      type=int,   default=32)
+    parser.add_argument("--num-workers",     type=int,   default=0,
+                        help="procesos de carga de datos (GPU/Colab: 2-4; def. 0)")
     parser.add_argument("--lr",              type=float, default=1e-4)
+    parser.add_argument("--amp",             action="store_true",
+                        help="precisión mixta en GPU CUDA (más rápido, menos memoria)")
     parser.add_argument("--freeze-backbone", action="store_true",
                         help="Congelar backbone, solo entrenar la cabeza fc")
     parser.add_argument("--output",          default=None,
@@ -269,7 +310,9 @@ def main():
     print(f"Dataset      : {args.data_dir}")
     print(f"Épocas       : {args.epochs}")
     print(f"Batch size   : {args.batch_size}")
+    print(f"Num workers  : {args.num_workers}")
     print(f"LR           : {args.lr}")
+    print(f"AMP          : {args.amp}")
     print(f"Freeze BB    : {args.freeze_backbone}")
     print(f"Salida       : {args.output}")
     print("─" * 50)
