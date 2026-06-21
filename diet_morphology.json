@@ -1,0 +1,293 @@
+{
+  "schema_version": "1.0.0",
+  "description": "Base de conocimiento morfológico para inferir dieta (carnívoro / herbívoro / omnívoro) a partir de rasgos físicos observables. Pensado como PLAN B del clasificador: cuando el reconocimiento de especie falla o tiene baja confianza, se puntúan los rasgos visibles de la foto y se suman ponderados hasta alcanzar un umbral de confianza.",
+
+  "classes": ["carnivore", "herbivore", "omnivore"],
+
+  "scoring": {
+    "method": "weighted_affinity_vote",
+    "explanation": "Para cada rasgo OBSERVADO f con estado s: contribucion[c] += reliability[f] * affinity[f][s][c] * obs_conf. La confianza final por clase = contribucion[c] / suma_de_contribuciones. Se decide la clase de mayor confianza si supera decision_threshold y se observaron al menos min_features_required rasgos; si no, 'uncertain'.",
+    "decision_threshold": 0.50,
+    "min_features_required": 2,
+    "affinity_note": "Cada terna affinity (carnivore, herbivore, omnivore) suma ~1.0: representa, dado SOLO ese rasgo, cuánto apunta a cada dieta. 'reliability' es cuán diagnóstico es el rasgo (mayor = más peso). Los rasgos con visible_in_photo=false NO pueden detectarse desde una imagen; se incluyen para completitud y para usos con datos anatómicos."
+  },
+
+  "features": [
+    {
+      "id": "eye_placement",
+      "name": "Posición de los ojos",
+      "visible_in_photo": true,
+      "reliability": 2.5,
+      "states": {
+        "forward_facing": {
+          "affinity": {"carnivore": 0.60, "herbivore": 0.05, "omnivore": 0.35},
+          "note": "Ojos al frente → visión binocular y percepción de profundidad para cazar. Solo 3 grupos de vertebrados los tienen al frente: primates, mamíferos carnívoros y aves de presa."
+        },
+        "lateral": {
+          "affinity": {"carnivore": 0.05, "herbivore": 0.83, "omnivore": 0.12},
+          "note": "Ojos a los lados → campo visual de hasta ~350° para detectar depredadores. Típico de presa: conejos, ciervos, antílopes, vacas."
+        },
+        "intermediate": {
+          "affinity": {"carnivore": 0.25, "herbivore": 0.30, "omnivore": 0.45},
+          "note": "Posición intermedia, frecuente en omnívoros generalistas."
+        }
+      }
+    },
+    {
+      "id": "canine_teeth",
+      "name": "Caninos (colmillos)",
+      "visible_in_photo": true,
+      "reliability": 3.0,
+      "states": {
+        "long_sharp_prominent": {
+          "affinity": {"carnivore": 0.70, "herbivore": 0.02, "omnivore": 0.28},
+          "note": "Caninos largos y puntiagudos para perforar y sujetar presa."
+        },
+        "small_or_absent": {
+          "affinity": {"carnivore": 0.03, "herbivore": 0.80, "omnivore": 0.17},
+          "note": "Herbívoros suelen carecer de caninos o tenerlos diminutos; a menudo un diastema en su lugar."
+        },
+        "moderate_present": {
+          "affinity": {"carnivore": 0.25, "herbivore": 0.10, "omnivore": 0.65},
+          "note": "Caninos presentes pero moderados, como en osos, cerdos o humanos."
+        }
+      }
+    },
+    {
+      "id": "cheek_teeth",
+      "name": "Muelas / dientes posteriores",
+      "visible_in_photo": true,
+      "reliability": 2.5,
+      "states": {
+        "sharp_bladelike_carnassial": {
+          "affinity": {"carnivore": 0.85, "herbivore": 0.02, "omnivore": 0.13},
+          "note": "Carnasiales en forma de cuchilla para cizallar carne."
+        },
+        "flat_broad_grinding": {
+          "affinity": {"carnivore": 0.02, "herbivore": 0.80, "omnivore": 0.18},
+          "note": "Molares anchos y planos para moler vegetación fibrosa."
+        },
+        "mixed_cusped": {
+          "affinity": {"carnivore": 0.10, "herbivore": 0.20, "omnivore": 0.70},
+          "note": "Molares cuadrados con cúspides redondeadas (oso, cerdo): trituran tanto carne como planta."
+        }
+      }
+    },
+    {
+      "id": "overall_tooth_shape",
+      "name": "Forma general de la dentadura",
+      "visible_in_photo": true,
+      "reliability": 2.0,
+      "states": {
+        "mostly_pointed": {
+          "affinity": {"carnivore": 0.75, "herbivore": 0.05, "omnivore": 0.20},
+          "note": "Dentadura predominantemente puntiaguda (cuando no se distinguen dientes individuales)."
+        },
+        "mostly_flat": {
+          "affinity": {"carnivore": 0.03, "herbivore": 0.82, "omnivore": 0.15},
+          "note": "Dentadura predominantemente plana / aplanada."
+        },
+        "mixed": {
+          "affinity": {"carnivore": 0.12, "herbivore": 0.18, "omnivore": 0.70},
+          "note": "Mezcla visible de dientes cortantes y de molienda."
+        }
+      }
+    },
+    {
+      "id": "jaw_movement",
+      "name": "Movimiento de la mandíbula",
+      "visible_in_photo": false,
+      "reliability": 1.8,
+      "states": {
+        "vertical_shearing_only": {
+          "affinity": {"carnivore": 0.80, "herbivore": 0.05, "omnivore": 0.15},
+          "note": "Mandíbula que solo abre/cierra (corte vertical), sin desplazamiento lateral. Articulación tipo bisagra."
+        },
+        "lateral_grinding": {
+          "affinity": {"carnivore": 0.03, "herbivore": 0.80, "omnivore": 0.17},
+          "note": "Movimiento lateral de lado a lado para moler (vacas, caballos)."
+        },
+        "both_vertical_and_lateral": {
+          "affinity": {"carnivore": 0.10, "herbivore": 0.20, "omnivore": 0.70},
+          "note": "Movimiento mixto, moderado en ambos ejes (cerdo, humano)."
+        }
+      }
+    },
+    {
+      "id": "snout_skull_shape",
+      "name": "Forma del hocico / cráneo",
+      "visible_in_photo": true,
+      "reliability": 1.5,
+      "states": {
+        "angular_pronounced_long": {
+          "affinity": {"carnivore": 0.60, "herbivore": 0.10, "omnivore": 0.30},
+          "note": "Cráneo angular con hocico pronunciado → mayor fuerza de mordida."
+        },
+        "short_rounded": {
+          "affinity": {"carnivore": 0.15, "herbivore": 0.55, "omnivore": 0.30},
+          "note": "Cráneo redondeado de hocico corto, menos fuerza de mordida necesaria."
+        },
+        "intermediate": {
+          "affinity": {"carnivore": 0.25, "herbivore": 0.30, "omnivore": 0.45},
+          "note": "Longitud y angularidad intermedias."
+        }
+      }
+    },
+    {
+      "id": "skull_jaw_robustness",
+      "name": "Tamaño / robustez del cráneo y mandíbula",
+      "visible_in_photo": true,
+      "reliability": 1.0,
+      "states": {
+        "large_robust_strong_jaw": {
+          "affinity": {"carnivore": 0.55, "herbivore": 0.20, "omnivore": 0.25},
+          "note": "Cráneo grande con mandíbula robusta y línea mandibular marcada."
+        },
+        "small_light": {
+          "affinity": {"carnivore": 0.10, "herbivore": 0.65, "omnivore": 0.25},
+          "note": "Cráneo pequeño y ligero."
+        },
+        "intermediate": {
+          "affinity": {"carnivore": 0.25, "herbivore": 0.30, "omnivore": 0.45},
+          "note": "Robustez intermedia."
+        }
+      }
+    },
+    {
+      "id": "eye_size_relative",
+      "name": "Tamaño relativo del ojo",
+      "visible_in_photo": true,
+      "reliability": 1.0,
+      "states": {
+        "large": {
+          "affinity": {"carnivore": 0.55, "herbivore": 0.15, "omnivore": 0.30},
+          "note": "Ojos grandes, frecuentes en depredadores (incl. nocturnos)."
+        },
+        "small": {
+          "affinity": {"carnivore": 0.15, "herbivore": 0.55, "omnivore": 0.30},
+          "note": "Ojos relativamente pequeños."
+        },
+        "medium": {
+          "affinity": {"carnivore": 0.25, "herbivore": 0.30, "omnivore": 0.45},
+          "note": "Tamaño medio."
+        }
+      }
+    },
+    {
+      "id": "feet_type",
+      "name": "Tipo de extremidad / pie",
+      "visible_in_photo": true,
+      "reliability": 2.5,
+      "states": {
+        "sharp_claws_or_talons": {
+          "affinity": {"carnivore": 0.70, "herbivore": 0.02, "omnivore": 0.28},
+          "note": "Garras o talones curvos y afilados para sujetar/matar presa (felinos, rapaces)."
+        },
+        "hooves": {
+          "affinity": {"carnivore": 0.01, "herbivore": 0.95, "omnivore": 0.04},
+          "note": "Pezuñas de queratina (caballo, vaca, ciervo). Señal casi inequívoca de herbívoro."
+        },
+        "paws_with_blunt_claws": {
+          "affinity": {"carnivore": 0.20, "herbivore": 0.15, "omnivore": 0.65},
+          "note": "Patas con garras romas no retráctiles (osos, mapaches): omnívoros típicos."
+        },
+        "webbed_or_other": {
+          "affinity": {"carnivore": 0.35, "herbivore": 0.25, "omnivore": 0.40},
+          "note": "Pies palmeados u otras formas; poco diagnóstico por sí solo."
+        }
+      }
+    },
+    {
+      "id": "beak_shape",
+      "name": "Forma del pico (solo aves)",
+      "visible_in_photo": true,
+      "applies_to": "birds",
+      "reliability": 2.5,
+      "states": {
+        "hooked_raptorial": {
+          "affinity": {"carnivore": 0.85, "herbivore": 0.03, "omnivore": 0.12},
+          "note": "Pico ganchudo y robusto para desgarrar carne (águilas, búhos, halcones)."
+        },
+        "short_conical_seed": {
+          "affinity": {"carnivore": 0.03, "herbivore": 0.75, "omnivore": 0.22},
+          "note": "Pico corto, grueso y cónico para cascar semillas y grano."
+        },
+        "long_thin_probing": {
+          "affinity": {"carnivore": 0.45, "herbivore": 0.20, "omnivore": 0.35},
+          "note": "Pico largo y fino para néctar o sondear insectos; señal mixta."
+        },
+        "generalist_medium": {
+          "affinity": {"carnivore": 0.15, "herbivore": 0.25, "omnivore": 0.60},
+          "note": "Pico medio generalista (cuervos, gaviotas): omnívoros oportunistas."
+        }
+      }
+    },
+    {
+      "id": "digestive_tract_length",
+      "name": "Longitud del tracto digestivo",
+      "visible_in_photo": false,
+      "reliability": 2.0,
+      "states": {
+        "short_simple": {
+          "affinity": {"carnivore": 0.75, "herbivore": 0.05, "omnivore": 0.20},
+          "note": "Intestino corto: la carne se digiere rápido. No detectable en foto."
+        },
+        "long": {
+          "affinity": {"carnivore": 0.05, "herbivore": 0.75, "omnivore": 0.20},
+          "note": "Intestino largo para fermentar fibra vegetal. No detectable en foto."
+        },
+        "intermediate": {
+          "affinity": {"carnivore": 0.15, "herbivore": 0.20, "omnivore": 0.65},
+          "note": "Longitud intermedia. No detectable en foto."
+        }
+      }
+    },
+    {
+      "id": "stomach_type",
+      "name": "Tipo de estómago",
+      "visible_in_photo": false,
+      "reliability": 1.8,
+      "states": {
+        "simple_highly_acidic": {
+          "affinity": {"carnivore": 0.65, "herbivore": 0.05, "omnivore": 0.30},
+          "note": "Estómago simple muy ácido para disolver carne/hueso. No detectable en foto."
+        },
+        "rumen_or_enlarged_cecum": {
+          "affinity": {"carnivore": 0.01, "herbivore": 0.92, "omnivore": 0.07},
+          "note": "Rumen (rumiantes) o ciego agrandado para fermentación. No detectable en foto."
+        },
+        "simple_generalist": {
+          "affinity": {"carnivore": 0.20, "herbivore": 0.15, "omnivore": 0.65},
+          "note": "Estómago simple de omnívoro. No detectable en foto."
+        }
+      }
+    },
+    {
+      "id": "salivary_amylase",
+      "name": "Amilasa salival",
+      "visible_in_photo": false,
+      "reliability": 1.0,
+      "states": {
+        "absent": {
+          "affinity": {"carnivore": 0.70, "herbivore": 0.10, "omnivore": 0.20},
+          "note": "Sin amilasa: no procesa almidón en la boca. No detectable en foto."
+        },
+        "present": {
+          "affinity": {"carnivore": 0.05, "herbivore": 0.50, "omnivore": 0.45},
+          "note": "Amilasa presente: digiere almidón vegetal. No detectable en foto."
+        }
+      }
+    }
+  ],
+
+  "sources": [
+    {"title": "Carnivore, herbivore, or omnivore identification — Skulls Unlimited", "url": "https://www.skullsunlimited.com/blogs/educational-resources/carnivore-herbivore-or-omnivore-identification"},
+    {"title": "Examining Predator and Prey skulls — PA Envirothon", "url": "https://www.envirothonpa.org/wp-content/uploads/2013/12/3.Skull-Resource-1.pdf"},
+    {"title": "Hunters' Skulls — Arizona-Sonora Desert Museum", "url": "https://www.desertmuseum.org/center/edu/docs/3-4_Hunters_skulls.pdf"},
+    {"title": "What Different Beak Shapes Reveal About Birds' Diets — BirdWatching", "url": "https://www.birdwatchingdaily.com/beginners/birding-faq/what-different-beak-shapes-reveal-about-birds-diets/"},
+    {"title": "Beaks! — Cornell Lab of Ornithology", "url": "https://www.birds.cornell.edu/k12/beaks/"},
+    {"title": "Raptor talon shape and biomechanical performance (PMC6506530)", "url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6506530/"},
+    {"title": "Predatory Functional Morphology in Raptors (PMC2776979)", "url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2776979/"},
+    {"title": "Do Humans Have Omnivore Teeth? — ScienceInsights", "url": "https://scienceinsights.org/do-humans-have-omnivore-teeth/"}
+  ]
+}
