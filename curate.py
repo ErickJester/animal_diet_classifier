@@ -22,12 +22,13 @@ especie es opcional: define INATURALIST_API_TOKEN o pasa --inat-token para
 activarla; sin token, el curador decide solo por similitud visual.
 """
 
-__version__ = "1.2.0"  # 1.0 index/curate/status/commit + timer · 1.1 reidentify subcommand · 1.2 version print + fix __future__
+__version__ = "1.3.0"  # 1.0 index/curate/status/commit + timer · 1.1 reidentify subcommand · 1.2 version print + fix __future__ · 1.3 resumen de errores en reidentify
 
 import argparse
 import shutil
 import sys
 import time
+from collections import Counter
 from pathlib import Path
 
 from curator import DatasetCurator
@@ -131,6 +132,18 @@ def cmd_status(args):
 
 # ── subcomando: reidentify ───────────────────────────────────────────────────────
 
+# Descripción legible de cada causa de fallo que reporta SpeciesIdentifier.
+_STATUS_DESC = {
+    "sin_resultados": "la API respondió pero no reconoció ninguna especie",
+    "http_429":       "rate limit de iNaturalist agotado tras los reintentos",
+    "error_red":      "fallo de conexión o timeout",
+    "json_invalido":  "respuesta no era JSON válido",
+    "sin_taxon":      "respuesta sin nombre de taxón",
+}
+
+ERROR_LOG_PATH = config.DATA_DIR / "reidentify_errors.log"
+
+
 def cmd_reidentify(args):
     """Re-identifica con iNaturalist las imágenes ya acumuladas en _unidentified/.
 
@@ -158,6 +171,8 @@ def cmd_reidentify(args):
         images = images[:args.limit]
 
     moved_diet = moved_pending = no_id = 0
+    problems: Counter = Counter()   # causa de fallo → nº de imágenes
+    error_lines: list[str] = []     # detalle por imagen para el log
     print(f"Re-identificando {len(images)} imágenes de {src_dir}\n")
     print(f"{'archivo':<34} {'resultado':<14} especie / dieta")
     print("─" * 78)
@@ -166,7 +181,10 @@ def cmd_reidentify(args):
             guess = curator.identifier.identify(str(f))
             if guess is None:
                 no_id += 1
-                print(f"{f.name[:34]:<34} {'sin_id':<14}")
+                status = curator.identifier.last_status or "desconocido"
+                problems[status] += 1
+                error_lines.append(f"{f.name}\t{status}")
+                print(f"{f.name[:34]:<34} {status:<14}")
                 continue
 
             species, common = guess.scientific_name, guess.common_name
@@ -196,7 +214,19 @@ def cmd_reidentify(args):
     print("─" * 78)
     print(f"A dieta: {moved_diet}   A _pending_review: {moved_pending}   "
           f"Sin identificar: {no_id}   Tiempo: {elapsed:.1f}s")
-    print(f"Restan en _unidentified: {_count_images(src_dir)}")
+
+    if problems:
+        print("\n── Problemas en tiempo de ejecución ──")
+        for status, count in problems.most_common():
+            desc = _STATUS_DESC.get(status, "error HTTP de la API" if status.startswith("http_") else "")
+            print(f"  {status:<16} {count:>5}  {desc}")
+        ERROR_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+        header = time.strftime("# reidentify %Y-%m-%d %H:%M:%S")
+        ERROR_LOG_PATH.write_text(header + "\n" + "\n".join(error_lines) + "\n",
+                                  encoding="utf-8")
+        print(f"  Log detallado: {ERROR_LOG_PATH}")
+
+    print(f"\nRestan en _unidentified: {_count_images(src_dir)}")
     print("Luego ejecuta:  python curate.py commit")
 
 
