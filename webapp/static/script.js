@@ -164,9 +164,10 @@ function reveal(data) {
 
   const d = DISPLAY[data.label] || DISPLAY.unknown;
   const pct = (data.confidence * 100).toFixed(1);
-  const model =
-    data.source === "resnet50" ? "ResNet-50" :
-    data.source === "resnet18" ? "ResNet-18" : data.source;
+  const morphologyNote =
+    data.source === "morphology"
+      ? `<div class="morph-note">Llegamos a este resultado analizando las características físicas del animal</div>`
+      : "";
 
   resultEl.className = `result show ${d.cls}`;
   resultEl.innerHTML = `
@@ -176,7 +177,7 @@ function reveal(data) {
       <div class="conf-bar"><div class="conf-fill"></div></div>
       <div class="conf-label">${pct}% de confianza</div>
     </div>
-    <div class="model-badge">Resuelto por ${model}</div>
+    ${morphologyNote}
   `;
 
   // Anima el llenado de la barra tras el primer frame.

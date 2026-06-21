@@ -250,15 +250,15 @@ kbd {
 
 .conf-label { margin-top: 8px; color: var(--muted); font-size: .9rem; font-variant-numeric: tabular-nums; }
 
-.model-badge {
-  display: inline-block;
-  margin-top: 12px;
-  padding: 4px 12px;
+.morph-note {
+  margin-top: 14px;
+  padding: 8px 16px;
   border: 1px solid var(--border);
-  border-radius: 999px;
-  font-size: .78rem;
+  border-radius: 12px;
+  font-size: .85rem;
   color: var(--muted);
   background: rgba(255, 255, 255, .02);
+  font-style: italic;
 }
 
 .error-result .err {
