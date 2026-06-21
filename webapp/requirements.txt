@@ -1,0 +1,3 @@
+# Dependencia extra de la web app (el resto —torch, torchvision, opencv-python,
+# numpy— ya viene del requirements.txt de la raíz del proyecto).
+flask>=3.0.0

@@ -1,0 +1,323 @@
+/* ──────────────────────────────────────────────────────────────────────────
+   Clasificador de Dieta Animal — estilos de la página web
+   Tema oscuro con estética "análisis", animación de escaneo y resultado grande.
+   ────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  --bg:        #0b0f17;
+  --card:      #131a26;
+  --card-2:    #0f1520;
+  --border:    #243044;
+  --text:      #e7edf6;
+  --muted:     #8a99b0;
+  --accent:    #5b8dff;
+
+  --carn:      #ef4444;   /* carnívoro  → rojo  */
+  --herb:      #22c55e;   /* herbívoro  → verde */
+  --omni:      #f59e0b;   /* omnívoro   → ámbar */
+  --scan:      #5bd6ff;   /* línea de escaneo   */
+
+  --radius:    18px;
+  --shadow:    0 20px 60px rgba(0, 0, 0, .45);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 48px 20px;
+  overflow-x: hidden;
+}
+
+/* Resplandor de fondo */
+.aurora {
+  position: fixed;
+  inset: -30% -10% auto -10%;
+  height: 70vh;
+  background:
+    radial-gradient(40% 60% at 20% 20%, rgba(91, 141, 255, .22), transparent 70%),
+    radial-gradient(35% 55% at 80% 10%, rgba(91, 214, 255, .16), transparent 70%),
+    radial-gradient(45% 60% at 60% 40%, rgba(34, 197, 94, .10), transparent 70%);
+  filter: blur(20px);
+  z-index: -1;
+  pointer-events: none;
+}
+
+.app {
+  width: 100%;
+  max-width: 560px;
+}
+
+/* ── Cabecera ─────────────────────────────────────────────────────────────── */
+.head { text-align: center; margin-bottom: 22px; }
+
+.head h1 {
+  margin: 0 0 8px;
+  font-size: 1.9rem;
+  letter-spacing: -.02em;
+}
+
+.sub { margin: 0; color: var(--muted); font-size: .98rem; }
+.t-carn { color: var(--carn); font-weight: 600; }
+.t-herb { color: var(--herb); font-weight: 600; }
+.t-omni { color: var(--omni); font-weight: 600; }
+
+/* ── Tarjeta principal ────────────────────────────────────────────────────── */
+.card {
+  background: linear-gradient(180deg, var(--card), var(--card-2));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 18px;
+}
+
+/* ── Zona de subida ───────────────────────────────────────────────────────── */
+.drop-zone {
+  display: block;
+  position: relative;
+  border: 2px dashed var(--border);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, .015);
+  min-height: 280px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color .2s, background .2s;
+}
+
+.drop-zone:hover { border-color: #34507e; background: rgba(91, 141, 255, .05); }
+.drop-zone.dragover { border-color: var(--accent); background: rgba(91, 141, 255, .10); }
+
+.placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--muted);
+  text-align: center;
+  padding: 20px;
+}
+.ph-icon  { font-size: 2.6rem; opacity: .9; }
+.ph-title { font-size: 1.05rem; color: var(--text); font-weight: 600; }
+.ph-hint  { font-size: .85rem; }
+
+kbd {
+  display: inline-block;
+  padding: 1px 6px;
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, .04);
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: .78em;
+  line-height: 1.4;
+}
+
+/* ── Preview + escaneo ────────────────────────────────────────────────────── */
+.preview-wrap { position: relative; line-height: 0; }
+
+.preview-img {
+  display: block;
+  width: 100%;
+  max-height: 460px;
+  object-fit: contain;
+  background: #000;
+}
+
+/* Velo, rejilla y línea: ocultos hasta que se analiza */
+.scan-veil, .scan-grid, .scanline { opacity: 0; transition: opacity .35s; pointer-events: none; }
+
+.scan-veil { position: absolute; inset: 0; background: rgba(8, 12, 20, .35); }
+
+.scan-grid {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(91, 214, 255, .15) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(91, 214, 255, .15) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mix-blend-mode: screen;
+}
+
+.scanline {
+  position: absolute; left: 0; right: 0; top: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--scan), transparent);
+  box-shadow: 0 0 16px 2px var(--scan);
+}
+
+.preview-wrap.analyzing .scan-veil,
+.preview-wrap.analyzing .scan-grid,
+.preview-wrap.analyzing .scanline { opacity: 1; }
+
+.preview-wrap.analyzing .scanline { animation: scan 1.7s cubic-bezier(.45, 0, .55, 1) infinite; }
+
+@keyframes scan {
+  0%   { top: 2%;   }
+  50%  { top: 98%;  }
+  100% { top: 2%;   }
+}
+
+/* Borde pulsante mientras analiza */
+.drop-zone:has(.preview-wrap.analyzing) { border-color: var(--scan); }
+
+/* ── Mensajes de estado ───────────────────────────────────────────────────── */
+.status {
+  min-height: 0;
+  height: 0;
+  overflow: hidden;
+  text-align: center;
+  color: var(--scan);
+  font-size: .95rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .01em;
+  opacity: 0;
+  transition: opacity .25s, height .25s, margin .25s;
+}
+.status.show {
+  height: auto;
+  opacity: 1;
+  margin-top: 14px;
+}
+.status::before {
+  content: "⟳ ";
+  display: inline-block;
+  animation: spin 1.1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Resultado ────────────────────────────────────────────────────────────── */
+.result {
+  height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(8px) scale(.98);
+  transition: opacity .4s, transform .4s;
+  text-align: center;
+}
+.result.show {
+  height: auto;
+  opacity: 1;
+  transform: none;
+  margin-top: 18px;
+}
+
+.result-emoji { font-size: 3.4rem; line-height: 1; }
+
+.result-name {
+  font-size: 3.4rem;
+  font-weight: 800;
+  letter-spacing: -.03em;
+  margin: 4px 0 2px;
+  line-height: 1.05;
+}
+
+.diet-carnivore .result-name { color: var(--carn); text-shadow: 0 0 36px rgba(239, 68, 68, .45); }
+.diet-herbivore .result-name { color: var(--herb); text-shadow: 0 0 36px rgba(34, 197, 94, .45); }
+.diet-omnivore  .result-name { color: var(--omni); text-shadow: 0 0 36px rgba(245, 158, 11, .45); }
+.diet-unknown   .result-name { color: var(--muted); }
+
+/* Barra de confianza */
+.conf { max-width: 320px; margin: 14px auto 0; }
+.conf-bar {
+  height: 10px;
+  background: rgba(255, 255, 255, .07);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.conf-fill {
+  height: 100%;
+  width: 0;
+  border-radius: 999px;
+  transition: width .9s cubic-bezier(.2, .7, .2, 1);
+  background: var(--muted);
+}
+.diet-carnivore .conf-fill { background: linear-gradient(90deg, #b91c1c, var(--carn)); }
+.diet-herbivore .conf-fill { background: linear-gradient(90deg, #15803d, var(--herb)); }
+.diet-omnivore  .conf-fill { background: linear-gradient(90deg, #b45309, var(--omni)); }
+
+.conf-label { margin-top: 8px; color: var(--muted); font-size: .9rem; font-variant-numeric: tabular-nums; }
+
+.model-badge {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 4px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: .78rem;
+  color: var(--muted);
+  background: rgba(255, 255, 255, .02);
+}
+
+.error-result .err {
+  color: #fca5a5;
+  background: rgba(239, 68, 68, .08);
+  border: 1px solid rgba(239, 68, 68, .3);
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: .95rem;
+}
+
+/* ── Botones ──────────────────────────────────────────────────────────────── */
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.btn {
+  flex: 1;
+  padding: 13px 18px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: transform .08s, filter .2s, opacity .2s, background .2s;
+}
+.btn:active:not(:disabled) { transform: translateY(1px); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+
+.btn-primary {
+  background: linear-gradient(180deg, #6f9bff, var(--accent));
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(91, 141, 255, .35);
+}
+.btn-primary:hover:not(:disabled) { filter: brightness(1.07); }
+
+.btn-ghost {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text);
+  flex: 0 0 auto;
+  min-width: 120px;
+}
+.btn-ghost:hover:not(:disabled) { background: rgba(255, 255, 255, .04); }
+
+/* ── Pie ──────────────────────────────────────────────────────────────────── */
+.foot {
+  margin-top: 18px;
+  text-align: center;
+  color: var(--muted);
+  font-size: .82rem;
+  line-height: 1.5;
+}
+.foot strong { color: #b9c6da; font-weight: 600; }
+
+@media (max-width: 480px) {
+  .head h1 { font-size: 1.55rem; }
+  .result-name { font-size: 2.6rem; }
+  .result-emoji { font-size: 2.8rem; }
+}

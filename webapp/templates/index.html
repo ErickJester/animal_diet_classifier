@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clasificador de Dieta Animal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="aurora"></div>
+
+  <main class="app">
+    <header class="head">
+      <h1>Clasificador de Dieta Animal</h1>
+      <p class="sub">Sube una foto y descubre si el animal es
+        <span class="t-carn">carnívoro</span>,
+        <span class="t-herb">herbívoro</span> u
+        <span class="t-omni">omnívoro</span>.</p>
+    </header>
+
+    <section class="card">
+      <!-- Zona de subida / preview -->
+      <label id="drop-zone" class="drop-zone" for="file-input">
+        <input id="file-input" type="file" accept="image/*" hidden>
+
+        <div id="placeholder" class="placeholder">
+          <div class="ph-icon">📷</div>
+          <div class="ph-title">Arrastra una foto aquí</div>
+          <div class="ph-hint">haz clic para elegir · o pega con <kbd>Ctrl</kbd>+<kbd>V</kbd></div>
+        </div>
+
+        <div id="preview-wrap" class="preview-wrap" hidden>
+          <img id="preview-img" class="preview-img" alt="Vista previa del animal">
+          <div class="scan-veil"></div>
+          <div class="scan-grid"></div>
+          <div class="scanline"></div>
+        </div>
+      </label>
+
+      <!-- Mensajes de análisis -->
+      <div id="status" class="status"></div>
+
+      <!-- Resultado en grande -->
+      <div id="result" class="result"></div>
+
+      <!-- Botones -->
+      <div class="actions">
+        <button id="analyze-btn" class="btn btn-primary" disabled>Analizar</button>
+        <button id="reset-btn" class="btn btn-ghost" disabled>Otra foto</button>
+      </div>
+    </section>
+
+    <footer class="foot">
+      Cascada <strong>ResNet-18 → ResNet-50</strong>: si el modelo rápido duda,
+      entra el modelo de respaldo más preciso.
+    </footer>
+  </main>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
