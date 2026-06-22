@@ -18,7 +18,7 @@ ResNet-18 (primario, rápido) → ResNet-50 (respaldo, más preciso) → morfolo
 | `other` | Fuera de alcance: no se le debe asignar dieta |
 
 La clase `other` es la clase negativa: se entrena con **insectos** (la mayoría),
-paisajes, comida y objetos/cosas variadas (~10k imágenes, balanceada con las clases
+paisajes, comida y objetos/cosas variadas (~12k imágenes, en el rango de las clases
 animales) para que el modelo rechace lo que no debería clasificar. Incluye tanto
 cosas que no son animales (paisajes, comida, objetos) como animales fuera de alcance
 (insectos, que son ~55% de la clase por ser lo que más confunde al modelo).
@@ -259,9 +259,9 @@ animal_diet_classifier/
 
 Para activar una fuente deshabilitada: editar `enabled=True` en `curator/sources.py`.
 
-Las fuentes `other-*` tienen un tope `max_images` (insectos 5500 + escenas 1500 +
-comida 1500 + random 1500 = ~10k) para mantener la clase `other` balanceada con las
-clases animales (~10k cada una). Los insectos son la mayoría (~55%).
+Las fuentes `other-*` tienen un tope `max_images` (insectos 6600 + escenas 1800 +
+comida 1800 + random 1800 = ~12k) para mantener la clase `other` en el rango de las
+clases animales. Los insectos son la mayoría (~55%).
 
 ---
 

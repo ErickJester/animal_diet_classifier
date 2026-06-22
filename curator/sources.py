@@ -155,7 +155,7 @@ BULK_SOURCES = [
     # Enseñan al modelo a rechazar lo que NO debe recibir dieta: cosas que no son
     # animales (paisajes, comida, objetos/cosas variadas) y animales fuera de
     # alcance (INSECTOS). fixed_diet="other" salta el registro de especies (toda la
-    # fuente es "other"); max_images mantiene la clase balanceada (~10k en total).
+    # fuente es "other"); max_images mantiene la clase balanceada (~12k en total).
     # Los INSECTOS son la MAYORÍA de "other" (~55%): es lo que más confunde a la
     # cascada, así que se refuerza su rechazo.
     # IMPORTANTE: la única "excepción animal" permitida aquí son los insectos
@@ -169,7 +169,7 @@ BULK_SOURCES = [
              "clase 'other': los insectos quedan FUERA del alcance y se rechazan. "
              "Si el slug falla, activa 'other-insects-alt' (más pequeño).",
         fixed_diet="other",
-        max_images=5500,
+        max_images=6600,
     ),
     BulkSource(
         name="other-insects-alt",
@@ -187,7 +187,7 @@ BULK_SOURCES = [
         ref="puneet6060/intel-image-classification",
         note="Intel Image Classification — escenas/paisajes/edificios/calle (no-animal)",
         fixed_diet="other",
-        max_images=1500,
+        max_images=1800,
     ),
     BulkSource(
         name="other-food",
@@ -195,7 +195,7 @@ BULK_SOURCES = [
         ref="kmader/food41",
         note="Food-101 — platos de comida (no-animal). Verifica el slug si la descarga falla.",
         fixed_diet="other",
-        max_images=1500,
+        max_images=1800,
     ),
     BulkSource(
         name="other-random",
@@ -205,7 +205,7 @@ BULK_SOURCES = [
              "variedad 'random' a 'other'. Puro no-animal. ¿Quieres más variedad? "
              "Vuelca imágenes propias en downloads/other/ y corre prepare.py.",
         fixed_diet="other",
-        max_images=1500,
+        max_images=1800,
     ),
 ]
 
