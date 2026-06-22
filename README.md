@@ -15,11 +15,12 @@ ResNet-18 (primario, rápido) → ResNet-50 (respaldo, más preciso) → morfolo
 | `carnivore` | Come principalmente carne |
 | `herbivore` | Come principalmente vegetales |
 | `omnivore` | Come de ambos tipos |
-| `other` | La imagen **no** contiene un animal |
+| `other` | Fuera de alcance: no se le debe asignar dieta |
 
-La clase `other` es la clase negativa: se entrena con imágenes de escenas, comida
-y objetos (~10k imágenes, balanceada con las clases animales) para que el modelo
-rechace entradas que no debería clasificar como dieta.
+La clase `other` es la clase negativa: se entrena con imágenes de escenas, comida,
+objetos e **insectos** (~10k imágenes, balanceada con las clases animales) para que
+el modelo rechace lo que no debería clasificar. Incluye tanto cosas que no son
+animales (paisajes, comida, objetos) como animales fuera de alcance (insectos).
 
 ---
 
@@ -58,10 +59,12 @@ Descarga `animals90` y `mammals45` desde Kaggle (~20k imágenes animales) a `dow
 Para descargar también las fuentes no-animales (`other`):
 
 ```bash
-python download.py datasets --only other-scenes other-food
+python download.py datasets --only other-scenes other-food other-insects
 ```
 
 Las imágenes quedan en `downloads/other/` (ya etiquetadas, no pasan por el registro de especies).
+Los **insectos** entran aquí a propósito: quedan fuera del alcance del clasificador
+(no se les asigna dieta) y el modelo aprende a rechazarlos como `other`.
 
 Las fuentes `animals10`, `roboflow-ch` y `hf-big-animals` están deshabilitadas
 por defecto en `curator/sources.py` (ver comentarios para activarlas).
@@ -245,6 +248,7 @@ animal_diet_classifier/
 | iNaturalist | verificada por especie, API pública | animales | habilitada |
 | `other-scenes` (Kaggle: Intel) | paisajes, ciudades, glaciares | other | habilitada |
 | `other-food` (Kaggle: Food-101) | comida y platos | other | habilitada |
+| `other-insects` (Kaggle) | insectos (fuera de alcance) | other | habilitada |
 | `other-objects` | objetos/personas | other | deshabilitada (verifica slug) |
 | `animals10` (Kaggle) | masiva, 28k imgs en italiano | animales | deshabilitada |
 | `roboflow-ch` | ya etiquetada por dieta | animales | deshabilitada (falta API key) |
@@ -252,7 +256,7 @@ animal_diet_classifier/
 
 Para activar una fuente deshabilitada: editar `enabled=True` en `curator/sources.py`.
 
-Las fuentes `other-*` tienen un tope `max_images` (5500 + 4500 = ~10k) para
+Las fuentes `other-*` tienen un tope `max_images` (4000 + 3500 + 2500 = ~10k) para
 mantener la clase `other` balanceada con las clases animales (~10k cada una).
 
 ---

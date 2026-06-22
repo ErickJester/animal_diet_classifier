@@ -164,7 +164,7 @@ BULK_SOURCES = [
         ref="puneet6060/intel-image-classification",
         note="Intel Image Classification — escenas/paisajes/edificios/calle (no-animal)",
         fixed_diet="other",
-        max_images=5500,
+        max_images=4000,
     ),
     BulkSource(
         name="other-food",
@@ -172,7 +172,17 @@ BULK_SOURCES = [
         ref="kmader/food41",
         note="Food-101 — platos de comida (no-animal). Verifica el slug si la descarga falla.",
         fixed_diet="other",
-        max_images=4500,
+        max_images=3500,
+    ),
+    BulkSource(
+        name="other-insects",
+        kind="kaggle",
+        ref="hammaadali/insects-recognition",
+        note="Insects Recognition — mariposa/libélula/saltamontes/mariquita/mosquito. "
+             "Los insectos quedan FUERA del alcance (no carní/herbí/omnívoro): se "
+             "rechazan como 'other'. Verifica el slug si la descarga falla.",
+        fixed_diet="other",
+        max_images=2500,
     ),
     BulkSource(
         name="other-objects",
