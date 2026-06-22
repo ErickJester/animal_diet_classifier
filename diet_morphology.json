@@ -1,6 +1,6 @@
 {
-  "schema_version": "1.1.0",
-  "description": "Base de conocimiento morfológico para inferir dieta (carnívoro / herbívoro / omnívoro) a partir de rasgos físicos observables. Pensado como PLAN C del clasificador: cuando el reconocimiento de especie falla o tiene baja confianza, se puntúan los rasgos visibles de la foto y se suman ponderados hasta alcanzar un umbral de confianza. v1.1 añade estados para taxones EXTINTOS no mamíferos (dientes serrados de terópodo, picos córneos de dinosaurios herbívoros, baterías dentales) ya que la base original era mamífero/ave-céntrica.",
+  "schema_version": "2.0.0",
+  "description": "Base de conocimiento morfológico para inferir dieta (carnivore / herbivore / omnivore) a partir de rasgos físicos observables. Plan C del clasificador: cuando la CNN tiene baja confianza, se puntúan los rasgos visibles y se suman ponderados hasta alcanzar un umbral de confianza. v2.0 fusiona la base general de mamíferos/aves (v1.x) con la base especializada en extintos y criaturas mitológicas: los 13 features originales cubren animales vivos; los 6 nuevos cubren dinosaurios, megafauna extinta y criaturas míticas. El scorer ignora los features que no se observan, así que coexistir en un solo archivo no produce conflictos.",
 
   "classes": ["carnivore", "herbivore", "omnivore"],
 
@@ -9,10 +9,11 @@
     "explanation": "Para cada rasgo OBSERVADO f con estado s: contribucion[c] += reliability[f] * affinity[f][s][c] * obs_conf. La confianza final por clase = contribucion[c] / suma_de_contribuciones. Se decide la clase de mayor confianza si supera decision_threshold y se observaron al menos min_features_required rasgos; si no, 'uncertain'.",
     "decision_threshold": 0.50,
     "min_features_required": 2,
-    "affinity_note": "Cada terna affinity (carnivore, herbivore, omnivore) suma ~1.0: representa, dado SOLO ese rasgo, cuánto apunta a cada dieta. 'reliability' es cuán diagnóstico es el rasgo (mayor = más peso). Los rasgos con visible_in_photo=false NO pueden detectarse desde una imagen; se incluyen para completitud y para usos con datos anatómicos."
+    "affinity_note": "Cada terna affinity (carnivore, herbivore, omnivore) suma ~1.0: representa, dado SOLO ese rasgo, cuánto apunta a cada dieta. 'reliability' es cuán diagnóstico es el rasgo (mayor = más peso). Los rasgos con visible_in_photo=false NO pueden detectarse desde una imagen. En criaturas mitológicas la dieta se infiere por analogía morfológica observable, no por evidencia científica directa."
   },
 
   "features": [
+
     {
       "id": "eye_placement",
       "name": "Posición de los ojos",
@@ -33,9 +34,10 @@
         }
       }
     },
+
     {
       "id": "canine_teeth",
-      "name": "Caninos (colmillos)",
+      "name": "Caninos (colmillos) — animales vivos",
       "visible_in_photo": true,
       "reliability": 3.0,
       "states": {
@@ -53,9 +55,10 @@
         }
       }
     },
+
     {
       "id": "cheek_teeth",
-      "name": "Muelas / dientes posteriores",
+      "name": "Muelas / dientes posteriores — animales vivos",
       "visible_in_photo": true,
       "reliability": 2.5,
       "states": {
@@ -73,19 +76,20 @@
         }
       }
     },
+
     {
       "id": "overall_tooth_shape",
-      "name": "Forma general de la dentadura",
+      "name": "Forma general de la dentadura — animales vivos",
       "visible_in_photo": true,
       "reliability": 2.0,
       "states": {
         "mostly_pointed": {
           "affinity": {"carnivore": 0.75, "herbivore": 0.05, "omnivore": 0.20},
-          "note": "Dentadura predominantemente puntiaguda (cuando no se distinguen dientes individuales). Incluye dientes serrados, recurvados y en forma de cuchilla de los terópodos (T. rex, Allosaurus, Velociraptor): señal fuerte de carnívoro extinto."
+          "note": "Dentadura predominantemente puntiaguda (cuando no se distinguen dientes individuales)."
         },
         "mostly_flat": {
           "affinity": {"carnivore": 0.03, "herbivore": 0.82, "omnivore": 0.15},
-          "note": "Dentadura predominantemente plana / aplanada. Incluye las baterías dentales de molienda de hadrosaurios y ceratopsios (cientos de dientes apretados para procesar vegetación): señal fuerte de herbívoro extinto."
+          "note": "Dentadura predominantemente plana / aplanada."
         },
         "mixed": {
           "affinity": {"carnivore": 0.12, "herbivore": 0.18, "omnivore": 0.70},
@@ -93,6 +97,7 @@
         }
       }
     },
+
     {
       "id": "jaw_movement",
       "name": "Movimiento de la mandíbula",
@@ -113,6 +118,7 @@
         }
       }
     },
+
     {
       "id": "snout_skull_shape",
       "name": "Forma del hocico / cráneo",
@@ -133,6 +139,7 @@
         }
       }
     },
+
     {
       "id": "skull_jaw_robustness",
       "name": "Tamaño / robustez del cráneo y mandíbula",
@@ -153,6 +160,7 @@
         }
       }
     },
+
     {
       "id": "eye_size_relative",
       "name": "Tamaño relativo del ojo",
@@ -173,15 +181,16 @@
         }
       }
     },
+
     {
       "id": "feet_type",
-      "name": "Tipo de extremidad / pie",
+      "name": "Tipo de extremidad / pie — animales vivos",
       "visible_in_photo": true,
       "reliability": 2.5,
       "states": {
         "sharp_claws_or_talons": {
           "affinity": {"carnivore": 0.70, "herbivore": 0.02, "omnivore": 0.28},
-          "note": "Garras o talones curvos y afilados para sujetar/matar presa (felinos, rapaces, y garras de terópodos como la hoz de Velociraptor/Deinonychus)."
+          "note": "Garras o talones curvos y afilados para sujetar/matar presa (felinos, rapaces)."
         },
         "hooves": {
           "affinity": {"carnivore": 0.01, "herbivore": 0.95, "omnivore": 0.04},
@@ -197,11 +206,12 @@
         }
       }
     },
+
     {
       "id": "beak_shape",
-      "name": "Forma del pico (aves y taxones con pico)",
+      "name": "Forma del pico — aves vivas",
       "visible_in_photo": true,
-      "applies_to": "birds_and_beaked_taxa",
+      "applies_to": "living_birds",
       "reliability": 2.5,
       "states": {
         "hooked_raptorial": {
@@ -219,13 +229,10 @@
         "generalist_medium": {
           "affinity": {"carnivore": 0.15, "herbivore": 0.25, "omnivore": 0.60},
           "note": "Pico medio generalista (cuervos, gaviotas): omnívoros oportunistas."
-        },
-        "toothless_cropping_beak": {
-          "affinity": {"carnivore": 0.05, "herbivore": 0.80, "omnivore": 0.15},
-          "note": "Pico córneo sin dientes para cortar/arrancar vegetación: tortugas y dinosaurios herbívoros con pico (ceratopsios, hadrosaurios, ornitisquios, ornitomímidos como Gallimimus). Señal fuerte de herbívoro."
         }
       }
     },
+
     {
       "id": "digestive_tract_length",
       "name": "Longitud del tracto digestivo",
@@ -246,6 +253,7 @@
         }
       }
     },
+
     {
       "id": "stomach_type",
       "name": "Tipo de estómago",
@@ -266,6 +274,7 @@
         }
       }
     },
+
     {
       "id": "salivary_amylase",
       "name": "Amilasa salival",
@@ -281,7 +290,252 @@
           "note": "Amilasa presente: digiere almidón vegetal. No detectable en foto."
         }
       }
+    },
+
+    {
+      "id": "extinct_dentition",
+      "name": "Dentición o estructura de corte — extintos",
+      "visible_in_photo": true,
+      "applies_to": "extinct_taxa",
+      "reliability": 3.2,
+      "states": {
+        "serrated_recurved_theropod_teeth": {
+          "affinity": {"carnivore": 0.93, "herbivore": 0.01, "omnivore": 0.06},
+          "note": "Dientes recurvados/dentados de terópodo para cortar carne (T. rex, Allosaurus, Velociraptor); señal fuerte de carnívoro."
+        },
+        "conical_fish_grabbing_teeth": {
+          "affinity": {"carnivore": 0.80, "herbivore": 0.02, "omnivore": 0.18},
+          "note": "Dientes cónicos y mandíbulas estrechas para sujetar peces; carnívoro piscívoro (Spinosaurus)."
+        },
+        "blade_like_jaw_plates": {
+          "affinity": {"carnivore": 0.92, "herbivore": 0.02, "omnivore": 0.06},
+          "note": "Placas mandibulares cortantes autoafilables; típico de depredador placodermo como Dunkleosteus."
+        },
+        "saber_canines": {
+          "affinity": {"carnivore": 0.95, "herbivore": 0.01, "omnivore": 0.04},
+          "note": "Caninos de sable para matar o sujetar presas grandes (Smilodon); señal casi directa de carnívoro."
+        },
+        "dental_battery_or_shearing_teeth": {
+          "affinity": {"carnivore": 0.02, "herbivore": 0.90, "omnivore": 0.08},
+          "note": "Baterías dentales o superficies de cizalla para procesar vegetación fibrosa; típico de ceratopsios/hadrosaurios."
+        },
+        "peg_comb_or_leaf_stripping_teeth": {
+          "affinity": {"carnivore": 0.03, "herbivore": 0.85, "omnivore": 0.12},
+          "note": "Dientes tipo peine o clavija para arrancar hojas/vegetación (Diplodocus)."
+        },
+        "flat_lamellar_grinding_molars": {
+          "affinity": {"carnivore": 0.01, "herbivore": 0.92, "omnivore": 0.07},
+          "note": "Molares laminares anchos para moler plantas duras o pastos; típico de proboscídeos como mamuts."
+        },
+        "toothless_or_reduced_teeth_generalist": {
+          "affinity": {"carnivore": 0.18, "herbivore": 0.32, "omnivore": 0.50},
+          "note": "Pico sin dientes o dientes reducidos sin señal clara; común en generalistas/omnívoros."
+        },
+        "unknown_or_not_visible": {
+          "affinity": {"carnivore": 0.34, "herbivore": 0.33, "omnivore": 0.33},
+          "note": "No se ve dentición; aporta casi nada. Mejor no usarlo salvo que el sistema exija un estado."
+        }
+      }
+    },
+
+    {
+      "id": "beak_or_mouthpart",
+      "name": "Pico, hocico o aparato bucal — extintos y mitológicos",
+      "visible_in_photo": true,
+      "applies_to": "extinct_and_mythological_taxa",
+      "reliability": 2.7,
+      "states": {
+        "hooked_eagle_or_raptorial_beak": {
+          "affinity": {"carnivore": 0.85, "herbivore": 0.03, "omnivore": 0.12},
+          "note": "Pico ganchudo de rapaz para desgarrar carne; útil para grifos/aves de presa."
+        },
+        "broad_ducklike_generalist_beak": {
+          "affinity": {"carnivore": 0.15, "herbivore": 0.25, "omnivore": 0.60},
+          "note": "Pico ancho tipo pato/generalista; puede procesar plantas, pequeños animales o alimento acuático."
+        },
+        "toothless_cropping_beak": {
+          "affinity": {"carnivore": 0.05, "herbivore": 0.82, "omnivore": 0.13},
+          "note": "Pico córneo para cortar vegetación; común en herbívoros como ceratopsios y tortugas."
+        },
+        "equine_or_caprine_grazing_muzzle": {
+          "affinity": {"carnivore": 0.03, "herbivore": 0.88, "omnivore": 0.09},
+          "note": "Hocico de caballo/cabra/ungulado para pastar o ramonear."
+        },
+        "proboscidean_trunk_with_tusks": {
+          "affinity": {"carnivore": 0.02, "herbivore": 0.88, "omnivore": 0.10},
+          "note": "Trompa y colmillos de proboscídeo; útil para manipular vegetación y excavar alimento."
+        },
+        "long_sauropod_cropping_mouth": {
+          "affinity": {"carnivore": 0.03, "herbivore": 0.85, "omnivore": 0.12},
+          "note": "Boca pequeña en cráneo de saurópodo de cuello largo, orientada a arrancar vegetación."
+        },
+        "reptilian_predatory_jaws": {
+          "affinity": {"carnivore": 0.82, "herbivore": 0.03, "omnivore": 0.15},
+          "note": "Mandíbulas reptilianas largas con aspecto depredador; útil para dragones o grandes terópodos cuando no se ven dientes."
+        }
+      }
+    },
+
+    {
+      "id": "limb_and_feet_type",
+      "name": "Extremidades, garras y pies — extintos y mitológicos",
+      "visible_in_photo": true,
+      "applies_to": "extinct_and_mythological_taxa",
+      "reliability": 2.4,
+      "states": {
+        "sharp_predatory_claws_or_talons": {
+          "affinity": {"carnivore": 0.78, "herbivore": 0.02, "omnivore": 0.20},
+          "note": "Garras/talones curvos para capturar o sujetar presa (garras de hoz de Velociraptor/Deinonychus)."
+        },
+        "hooves_or_hooflike_weight_bearing": {
+          "affinity": {"carnivore": 0.01, "herbivore": 0.94, "omnivore": 0.05},
+          "note": "Pezuñas o pies de ungulado; señal fuerte de herbívoro."
+        },
+        "columnar_quadruped_herbivore_limbs": {
+          "affinity": {"carnivore": 0.02, "herbivore": 0.88, "omnivore": 0.10},
+          "note": "Extremidades columnares de animal grande que sostiene mucho peso; típico de saurópodos/proboscídeos herbívoros."
+        },
+        "three_toed_cursorial_generalist": {
+          "affinity": {"carnivore": 0.20, "herbivore": 0.25, "omnivore": 0.55},
+          "note": "Pies corredores tipo ornitomimosaurio; por sí solos no bastan, pero apuntan a dieta flexible."
+        },
+        "large_scythe_claws_for_browsing": {
+          "affinity": {"carnivore": 0.10, "herbivore": 0.75, "omnivore": 0.15},
+          "note": "Garras enormes pero largas/frágiles para atraer ramas o defensa, no para cazar. Caso Therizinosaurus."
+        },
+        "webbed_or_aquatic_predator_limbs": {
+          "affinity": {"carnivore": 0.55, "herbivore": 0.10, "omnivore": 0.35},
+          "note": "Adaptaciones acuáticas con contexto depredador; favorece carnívoro/piscívoro."
+        }
+      }
+    },
+
+    {
+      "id": "body_plan_extinct_mythic",
+      "name": "Plan corporal general — extintos y mitológicos",
+      "visible_in_photo": true,
+      "applies_to": "extinct_and_mythological_taxa",
+      "reliability": 2.2,
+      "states": {
+        "large_theropod_predator": {
+          "affinity": {"carnivore": 0.85, "herbivore": 0.03, "omnivore": 0.12},
+          "note": "Bípedo terópodo robusto con cabeza grande y función depredadora."
+        },
+        "spinosaurid_semiaquatic_predator": {
+          "affinity": {"carnivore": 0.78, "herbivore": 0.03, "omnivore": 0.19},
+          "note": "Terópodo semiacuático con hocico largo y dieta basada en peces."
+        },
+        "armored_placoderm_predator": {
+          "affinity": {"carnivore": 0.90, "herbivore": 0.02, "omnivore": 0.08},
+          "note": "Pez acorazado con mandíbula cortante; depredador del Devónico."
+        },
+        "machairodont_felid": {
+          "affinity": {"carnivore": 0.93, "herbivore": 0.01, "omnivore": 0.06},
+          "note": "Felino dientes de sable (Smilodon); carnívoro hiperespecializado."
+        },
+        "sauropod_long_neck_quadruped": {
+          "affinity": {"carnivore": 0.02, "herbivore": 0.90, "omnivore": 0.08},
+          "note": "Saurópodo cuadrúpedo de cuello largo para ramonear/pastar vegetación."
+        },
+        "ceratopsian_beaked_frilled": {
+          "affinity": {"carnivore": 0.02, "herbivore": 0.88, "omnivore": 0.10},
+          "note": "Ceratopsio con pico, dientes posteriores y volante; herbívoro (Triceratops)."
+        },
+        "stegosaurian_armored_low_browser": {
+          "affinity": {"carnivore": 0.03, "herbivore": 0.85, "omnivore": 0.12},
+          "note": "Estegosaurio acorazado de ramoneo bajo; herbívoro (Stegosaurus)."
+        },
+        "proboscidean_grazer_browser": {
+          "affinity": {"carnivore": 0.01, "herbivore": 0.91, "omnivore": 0.08},
+          "note": "Proboscídeo tipo mamut: gran herbívoro ramoneador/pastador."
+        },
+        "ornithomimosaur_generalist": {
+          "affinity": {"carnivore": 0.18, "herbivore": 0.22, "omnivore": 0.60},
+          "note": "Ornitomimosaurio tipo avestruz (Gallimimus); dieta discutida, frecuentemente omnívora."
+        },
+        "therizinosaur_browsing_theropod": {
+          "affinity": {"carnivore": 0.05, "herbivore": 0.82, "omnivore": 0.13},
+          "note": "Terópodo raro con cuello largo y garras para ramonear; no es carnívoro aunque tenga garras gigantes."
+        },
+        "equine_caprine_unicorn": {
+          "affinity": {"carnivore": 0.02, "herbivore": 0.90, "omnivore": 0.08},
+          "note": "Criatura tipo caballo/cabra con cuerno; se clasifica como herbívora por analogía morfológica."
+        },
+        "lion_eagle_griffin": {
+          "affinity": {"carnivore": 0.85, "herbivore": 0.03, "omnivore": 0.12},
+          "note": "Grifo: cuerpo de león + cabeza/pico de águila. Ambas mitades señalan depredador."
+        },
+        "western_dragon_raptorial": {
+          "affinity": {"carnivore": 0.80, "herbivore": 0.04, "omnivore": 0.16},
+          "note": "Dragón occidental/reptiliano con mandíbulas, garras y alas; se clasifica como carnívoro por morfología depredadora."
+        }
+      }
+    },
+
+    {
+      "id": "feeding_evidence_nonphoto",
+      "name": "Evidencia dietaria no visible directamente en foto — extintos",
+      "visible_in_photo": false,
+      "applies_to": "extinct_taxa",
+      "reliability": 2.8,
+      "states": {
+        "fish_scales_or_small_animals_plus_gastroliths": {
+          "affinity": {"carnivore": 0.15, "herbivore": 0.25, "omnivore": 0.60},
+          "note": "Restos de peces/pequeños animales junto con gastrolitos o señales de vegetación: favorece omnívoro."
+        },
+        "plant_gut_contents_or_coprolites": {
+          "affinity": {"carnivore": 0.01, "herbivore": 0.92, "omnivore": 0.07},
+          "note": "Contenido intestinal/coprolitos con plantas: señal fuerte de herbívoro."
+        },
+        "tooth_marks_or_isotopes_on_large_prey": {
+          "affinity": {"carnivore": 0.90, "herbivore": 0.02, "omnivore": 0.08},
+          "note": "Marcas de mordida, isótopos o desgaste dental compatible con consumo de presas grandes/carroña."
+        },
+        "jaw_blades_for_armored_prey": {
+          "affinity": {"carnivore": 0.90, "herbivore": 0.02, "omnivore": 0.08},
+          "note": "Biomecánica mandibular adaptada a cortar o perforar presas resistentes."
+        },
+        "debated_herbivore_vs_omnivore": {
+          "affinity": {"carnivore": 0.15, "herbivore": 0.50, "omnivore": 0.35},
+          "note": "Cuando la literatura discute herbivoría vs omnivoría; úsalo para bajar confianza, no para decidir solo."
+        },
+        "unknown_mythological": {
+          "affinity": {"carnivore": 0.34, "herbivore": 0.33, "omnivore": 0.33},
+          "note": "Sin evidencia biológica real; no aporta casi nada. Usa rasgos visuales en su lugar."
+        }
+      }
+    },
+
+    {
+      "id": "ecological_role_or_context",
+      "name": "Rol ecológico o contexto inferido — extintos y mitológicos",
+      "visible_in_photo": false,
+      "applies_to": "extinct_and_mythological_taxa",
+      "reliability": 1.8,
+      "states": {
+        "apex_or_large_predator": {
+          "affinity": {"carnivore": 0.90, "herbivore": 0.02, "omnivore": 0.08},
+          "note": "Descrito como depredador superior o gran depredador."
+        },
+        "large_browser_or_grazer": {
+          "affinity": {"carnivore": 0.02, "herbivore": 0.90, "omnivore": 0.08},
+          "note": "Gran ramoneador/pastador de plantas."
+        },
+        "opportunistic_generalist": {
+          "affinity": {"carnivore": 0.20, "herbivore": 0.20, "omnivore": 0.60},
+          "note": "Dieta oportunista o dependiente de disponibilidad."
+        },
+        "mythic_guardian_predator": {
+          "affinity": {"carnivore": 0.75, "herbivore": 0.05, "omnivore": 0.20},
+          "note": "Criatura mitológica guardiana/depredadora; útil para grifos/dragones cuando la imagen no deja ver detalles."
+        },
+        "mythic_equine_herbivore": {
+          "affinity": {"carnivore": 0.02, "herbivore": 0.90, "omnivore": 0.08},
+          "note": "Criatura mitológica tipo caballo/cabra; dieta inferida como herbívora por analogía."
+        }
+      }
     }
+
   ],
 
   "sources": [
@@ -292,6 +546,22 @@
     {"title": "Beaks! — Cornell Lab of Ornithology", "url": "https://www.birds.cornell.edu/k12/beaks/"},
     {"title": "Raptor talon shape and biomechanical performance (PMC6506530)", "url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6506530/"},
     {"title": "Predatory Functional Morphology in Raptors (PMC2776979)", "url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2776979/"},
-    {"title": "Do Humans Have Omnivore Teeth? — ScienceInsights", "url": "https://scienceinsights.org/do-humans-have-omnivore-teeth/"}
+    {"title": "Do Humans Have Omnivore Teeth? — ScienceInsights", "url": "https://scienceinsights.org/do-humans-have-omnivore-teeth/"},
+    {"title": "Natural History Museum — Diplodocus", "url": "https://www.nhm.ac.uk/discover/dino-directory/diplodocus.html"},
+    {"title": "Natural History Museum — Triceratops", "url": "https://www.nhm.ac.uk/discover/dino-directory/triceratops.html"},
+    {"title": "Natural History Museum — Therizinosaurus", "url": "https://www.nhm.ac.uk/discover/dino-directory/therizinosaurus.html"},
+    {"title": "Natural History Museum — Gallimimus", "url": "https://www.nhm.ac.uk/discover/dino-directory/gallimimus.html"},
+    {"title": "Natural History Museum — Deinocheirus", "url": "https://www.nhm.ac.uk/discover/dino-directory/deinocheirus.html"},
+    {"title": "Lee et al. 2014 — Resolving the long-standing enigmas of a giant ornithomimosaur Deinocheirus mirificus", "url": "https://biblio.naturalsciences.be/library-1/rbins-staff-publications/pdfs/Lee%20et%20al.-%202014%20-%20Deinocheirus.pdf"},
+    {"title": "Natural History Museum — Spinosaurus", "url": "https://www.nhm.ac.uk/discover/dino-directory/spinosaurus.html"},
+    {"title": "Natural History Museum — Tyrannosaurus", "url": "https://www.nhm.ac.uk/discover/dino-directory/tyrannosaurus.html"},
+    {"title": "DeSantis et al. 2012 — Implications of Diet for the Extinction of Saber-Toothed Cats and American Lions", "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0052453"},
+    {"title": "Cleveland Museum of Natural History — Meet Dunk: Ohio's Ancient Apex Predator", "url": "https://www.cmnh.org/learn/science-blog/2025/02/07/meet-dunk-ohios-ancient-apex-predator"},
+    {"title": "Anderson & Westneat 2007 — Feeding mechanics and bite force modelling of Dunkleosteus terrelli", "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2373817/"},
+    {"title": "Natural History Museum — Dinosaur eating habit insights from Stegosaurus stenops", "url": "https://www.nhm.ac.uk/discover/news/2016/may/dinosaur-eating-habit-insights-stegosaurus-stenops.html"},
+    {"title": "Britannica — Woolly mammoth", "url": "https://www.britannica.com/animal/woolly-mammoth"},
+    {"title": "Britannica — Unicorn", "url": "https://www.britannica.com/topic/unicorn"},
+    {"title": "Britannica — Griffin", "url": "https://www.britannica.com/topic/griffin-mythological-creature"},
+    {"title": "Space.com — Draco Constellation: Facts About the Dragon", "url": "https://www.space.com/16755-draco-constellation.html"}
   ]
 }
