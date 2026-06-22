@@ -151,20 +151,43 @@ BULK_SOURCES = [
         enabled=False,   # verifica el repo_id y que venga como carpetas de imágenes
     ),
 
-    # ── clase "other" (NO animal) ──────────────────────────────────────────────
-    # Fuentes PURAMENTE no-animales: enseñan al modelo a rechazar lo que no es un
-    # animal (objetos, comida, paisajes, personas). fixed_diet="other" salta el
-    # registro de especies (toda la fuente es "other"); max_images mantiene la
-    # clase balanceada (~10k en total, el promedio de las otras tres clases).
-    # IMPORTANTE: no metas aquí datasets con carpetas de animales (gato/perro/…),
-    # los etiquetaría como "other", justo lo contrario de lo que queremos.
+    # ── clase "other" (fuera de alcance) ───────────────────────────────────────
+    # Enseñan al modelo a rechazar lo que NO debe recibir dieta: cosas que no son
+    # animales (paisajes, comida, objetos/cosas variadas) y animales fuera de
+    # alcance (INSECTOS). fixed_diet="other" salta el registro de especies (toda la
+    # fuente es "other"); max_images mantiene la clase balanceada (~10k en total).
+    # Los INSECTOS son la MAYORÍA de "other" (~55%): es lo que más confunde a la
+    # cascada, así que se refuerza su rechazo.
+    # IMPORTANTE: la única "excepción animal" permitida aquí son los insectos
+    # (deliberados). NO metas datasets de animales dentro de alcance (gato/perro/
+    # león/…): el modelo los etiquetaría como "other", justo lo contrario.
+    BulkSource(
+        name="other-insects",
+        kind="kaggle",
+        ref="rtlmhjbn/ip02-dataset",
+        note="IP102 — gran dataset de insectos (~75k imgs, plagas). MAYORÍA de la "
+             "clase 'other': los insectos quedan FUERA del alcance y se rechazan. "
+             "Si el slug falla, activa 'other-insects-alt' (más pequeño).",
+        fixed_diet="other",
+        max_images=5500,
+    ),
+    BulkSource(
+        name="other-insects-alt",
+        kind="kaggle",
+        ref="hammaadali/insects-recognition",
+        note="Insects Recognition (~3k: mariposa/libélula/saltamontes/mariquita/"
+             "mosquito). Alternativa/respaldo de 'other-insects' si IP102 falla.",
+        enabled=False,   # respaldo: actívala solo si IP102 no descarga
+        fixed_diet="other",
+        max_images=3000,
+    ),
     BulkSource(
         name="other-scenes",
         kind="kaggle",
         ref="puneet6060/intel-image-classification",
         note="Intel Image Classification — escenas/paisajes/edificios/calle (no-animal)",
         fixed_diet="other",
-        max_images=4000,
+        max_images=1500,
     ),
     BulkSource(
         name="other-food",
@@ -172,27 +195,17 @@ BULK_SOURCES = [
         ref="kmader/food41",
         note="Food-101 — platos de comida (no-animal). Verifica el slug si la descarga falla.",
         fixed_diet="other",
-        max_images=3500,
+        max_images=1500,
     ),
     BulkSource(
-        name="other-insects",
+        name="other-random",
         kind="kaggle",
-        ref="hammaadali/insects-recognition",
-        note="Insects Recognition — mariposa/libélula/saltamontes/mariquita/mosquito. "
-             "Los insectos quedan FUERA del alcance (no carní/herbí/omnívoro): se "
-             "rechazan como 'other'. Verifica el slug si la descarga falla.",
+        ref="paramaggarwal/fashion-product-images-small",
+        note="Cosas/objetos variados (ropa, calzado, accesorios, relojes…) — aporta "
+             "variedad 'random' a 'other'. Puro no-animal. ¿Quieres más variedad? "
+             "Vuelca imágenes propias en downloads/other/ y corre prepare.py.",
         fixed_diet="other",
-        max_images=2500,
-    ),
-    BulkSource(
-        name="other-objects",
-        kind="kaggle",
-        ref="usuario/dataset-de-objetos-no-animales",   # ← completa con un slug real
-        note="Objetos/personas no-animales — da variedad a 'other'. Completa el slug "
-             "o usa una carpeta local con prepare.py (ver README).",
-        enabled=False,   # requiere que verifiques/completes el slug antes de activarla
-        fixed_diet="other",
-        max_images=3000,
+        max_images=1500,
     ),
 ]
 

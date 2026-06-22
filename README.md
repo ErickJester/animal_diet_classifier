@@ -17,10 +17,11 @@ ResNet-18 (primario, rápido) → ResNet-50 (respaldo, más preciso) → morfolo
 | `omnivore` | Come de ambos tipos |
 | `other` | Fuera de alcance: no se le debe asignar dieta |
 
-La clase `other` es la clase negativa: se entrena con imágenes de escenas, comida,
-objetos e **insectos** (~10k imágenes, balanceada con las clases animales) para que
-el modelo rechace lo que no debería clasificar. Incluye tanto cosas que no son
-animales (paisajes, comida, objetos) como animales fuera de alcance (insectos).
+La clase `other` es la clase negativa: se entrena con **insectos** (la mayoría),
+paisajes, comida y objetos/cosas variadas (~10k imágenes, balanceada con las clases
+animales) para que el modelo rechace lo que no debería clasificar. Incluye tanto
+cosas que no son animales (paisajes, comida, objetos) como animales fuera de alcance
+(insectos, que son ~55% de la clase por ser lo que más confunde al modelo).
 
 ---
 
@@ -59,12 +60,13 @@ Descarga `animals90` y `mammals45` desde Kaggle (~20k imágenes animales) a `dow
 Para descargar también las fuentes no-animales (`other`):
 
 ```bash
-python download.py datasets --only other-scenes other-food other-insects
+python download.py datasets --only other-insects other-scenes other-food other-random
 ```
 
 Las imágenes quedan en `downloads/other/` (ya etiquetadas, no pasan por el registro de especies).
 Los **insectos** entran aquí a propósito: quedan fuera del alcance del clasificador
-(no se les asigna dieta) y el modelo aprende a rechazarlos como `other`.
+(no se les asigna dieta) y el modelo aprende a rechazarlos como `other`. Son la
+**mayoría** de la clase (~55%) porque es lo que más confunde a la cascada.
 
 Las fuentes `animals10`, `roboflow-ch` y `hf-big-animals` están deshabilitadas
 por defecto en `curator/sources.py` (ver comentarios para activarlas).
@@ -246,18 +248,20 @@ animal_diet_classifier/
 | `animals90` (Kaggle) | masiva, 90 especies | animales | habilitada |
 | `mammals45` (Kaggle) | masiva, 45 mamíferos | animales | habilitada |
 | iNaturalist | verificada por especie, API pública | animales | habilitada |
+| `other-insects` (Kaggle: IP102) | insectos, fuera de alcance (**mayoría**) | other | habilitada |
 | `other-scenes` (Kaggle: Intel) | paisajes, ciudades, glaciares | other | habilitada |
 | `other-food` (Kaggle: Food-101) | comida y platos | other | habilitada |
-| `other-insects` (Kaggle) | insectos (fuera de alcance) | other | habilitada |
-| `other-objects` | objetos/personas | other | deshabilitada (verifica slug) |
+| `other-random` (Kaggle: fashion) | objetos/cosas variadas | other | habilitada |
+| `other-insects-alt` (Kaggle) | insectos (respaldo de IP102) | other | deshabilitada |
 | `animals10` (Kaggle) | masiva, 28k imgs en italiano | animales | deshabilitada |
 | `roboflow-ch` | ya etiquetada por dieta | animales | deshabilitada (falta API key) |
 | `hf-big-animals` (HuggingFace) | dataset grande variado | animales | deshabilitada |
 
 Para activar una fuente deshabilitada: editar `enabled=True` en `curator/sources.py`.
 
-Las fuentes `other-*` tienen un tope `max_images` (4000 + 3500 + 2500 = ~10k) para
-mantener la clase `other` balanceada con las clases animales (~10k cada una).
+Las fuentes `other-*` tienen un tope `max_images` (insectos 5500 + escenas 1500 +
+comida 1500 + random 1500 = ~10k) para mantener la clase `other` balanceada con las
+clases animales (~10k cada una). Los insectos son la mayoría (~55%).
 
 ---
 
