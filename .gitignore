@@ -10,6 +10,7 @@ venv/
 
 # Imágenes descargadas / datasets (pueden ser cientos de MB)
 downloads/
+omnivoros/
 
 # Artefactos generados por el curador y el descargador
 curator/data/download_manifest.json

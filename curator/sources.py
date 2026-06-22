@@ -27,6 +27,7 @@ from __future__ import annotations
 __version__ = "1.2.0"  # 1.0 fetchers Kaggle/HF/Roboflow + iNat · 1.1 soporte paralelización · 1.2 Wikimedia Commons (extintos)
 
 import os
+import time
 import warnings
 from dataclasses import dataclass
 from pathlib import Path
@@ -274,21 +275,32 @@ def _fetch_roboflow(ref: str, dest: Path) -> Tuple[Optional[Path], str]:
 
 
 # ── descarga por URL (genérica) ───────────────────────────────────────────────
-def download_url(url: str) -> Optional[bytes]:
-    """Descarga el contenido de una URL. Devuelve los bytes o None ante cualquier error."""
+def download_url(url: str, retries: int = 3) -> Optional[bytes]:
+    """
+    Descarga el contenido de una URL. Devuelve los bytes o None ante error.
+
+    Reintenta ante fallos transitorios (las redes con proxy cortan conexiones de
+    forma intermitente y un único intento perdería muchas imágenes). Los errores
+    permanentes (403/404/410) no se reintentan.
+    """
     if not _REQUESTS_AVAILABLE:
         return None
-    try:
-        resp = requests.get(
-            url,
-            headers={"User-Agent": config.HTTP_USER_AGENT},
-            timeout=config.HTTP_TIMEOUT,
-            verify=_verify(),
-        )
-        if resp.status_code == 200 and resp.content:
-            return resp.content
-    except Exception:
-        pass
+    for attempt in range(retries):
+        if attempt:
+            time.sleep(0.4 * attempt)   # backoff suave entre reintentos
+        try:
+            resp = requests.get(
+                url,
+                headers={"User-Agent": config.HTTP_USER_AGENT},
+                timeout=config.HTTP_TIMEOUT,
+                verify=_verify(),
+            )
+            if resp.status_code == 200 and resp.content:
+                return resp.content
+            if resp.status_code in (403, 404, 410):
+                return None             # error permanente: no insistir
+        except Exception:
+            pass
     return None
 
 

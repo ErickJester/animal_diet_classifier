@@ -11,6 +11,11 @@ numpy>=1.24.0
 # Cliente HTTP para API de iNaturalist (curador + descargador)
 requests>=2.25.0
 
+# ── Descargador de omnívoros extintos (imagenes.py) ──────────────────────────
+# Lee omnivore_extinct_candidates.csv y baja imágenes de Wikimedia Commons.
+Pillow>=9.0.0             # filtro de resolución/conversión de imagen
+# pytesseract>=0.3.10     # OPCIONAL: descarta imágenes con texto incrustado (requiere Tesseract)
+
 # ── Descargador de datasets (download.py) ────────────────────────────────────
 # La fase B (suplemento desde iNaturalist) solo necesita 'requests', ya incluido.
 # La fase A (datasets masivos) usa estos paquetes según la fuente; si falta uno,

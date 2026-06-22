@@ -1,0 +1,16 @@
+species_folder,display_name,type,confidence_for_omnivore,recommended_search_query,notes
+Deinocheirus_mirificus,Deinocheirus mirificus,extinct dinosaur,high,"""Deinocheirus mirificus"" reconstruction omnivore",NHM lists omnivorous; distinctive duck-like beak and large claws.
+Gallimimus_bullatus,Gallimimus bullatus,extinct dinosaur,medium-high,"""Gallimimus bullatus"" reconstruction omnivore",NHM says probably omnivorous; use with care but acceptable.
+Ornithomimus_velox,Ornithomimus velox,extinct dinosaur,high,"""Ornithomimus velox"" reconstruction omnivore",NHM lists omnivorous.
+Dromiceiomimus_brevitertius,Dromiceiomimus brevitertius,extinct dinosaur,high,"""Dromiceiomimus brevitertius"" reconstruction omnivore",NHM omnivore gallery includes it.
+Struthiomimus_altus,Struthiomimus altus,extinct dinosaur,high,"""Struthiomimus altus"" reconstruction omnivore",NHM omnivore gallery includes it.
+Garudimimus_brevipes,Garudimimus brevipes,extinct dinosaur,high,"""Garudimimus brevipes"" reconstruction omnivore",NHM lists omnivorous.
+Oviraptor_philoceratops,Oviraptor philoceratops,extinct dinosaur,high,"""Oviraptor philoceratops"" reconstruction omnivore","NHM lists omnivorous; beaked/no teeth; hard fruits, eggs, possible shellfish."
+Citipati_osmolskae,Citipati osmolskae,extinct dinosaur,high,"""Citipati osmolskae"" reconstruction omnivore",NHM lists omnivorous.
+Khaan_mckennai,Khaan mckennai,extinct dinosaur,high,"""Khaan mckennai"" reconstruction omnivore",NHM lists omnivorous.
+Chirostenotes_pergracilis,Chirostenotes pergracilis,extinct dinosaur,high,"""Chirostenotes pergracilis"" reconstruction omnivore",NHM lists omnivorous.
+Caudipteryx_zoui,Caudipteryx zoui,extinct dinosaur,high,"""Caudipteryx zoui"" reconstruction omnivore",NHM lists omnivorous; insects and maybe plants.
+Avimimus_portentosus,Avimimus portentosus,extinct dinosaur,medium-high,"""Avimimus portentosus"" reconstruction omnivore",NHM omnivore gallery includes it.
+Gigantoraptor_erlianensis,Gigantoraptor erlianensis,extinct dinosaur,medium,"""Gigantoraptor erlianensis"" reconstruction omnivore",NHM says it might have eaten both vegetation and meat; keep as medium confidence.
+Beipiaosaurus_inexpectus,Beipiaosaurus inexpectus,extinct dinosaur,medium,"""Beipiaosaurus inexpectus"" reconstruction omnivore","NHM lists omnivorous, but therizinosaurs are often tricky; do not overuse."
+Shuvuuia_deserti,Shuvuuia deserti,extinct dinosaur,medium,"""Shuvuuia deserti"" reconstruction omnivore","NHM omnivore gallery includes it; likely small prey/insects, so use with caution."
