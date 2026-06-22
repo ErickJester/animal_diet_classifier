@@ -12,7 +12,8 @@ numpy>=1.24.0
 requests>=2.25.0
 
 # ── Descargador de omnívoros extintos (imagenes.py) ──────────────────────────
-# Lee omnivore_extinct_candidates.csv y baja imágenes de Wikimedia Commons.
+# Lee omnivore_extinct_candidates.csv y baja imágenes de Google Imágenes (Selenium).
+selenium>=4.6.0          # automatiza Chrome (chromedriver lo resuelve Selenium solo)
 Pillow>=9.0.0             # filtro de resolución/conversión de imagen
 # pytesseract>=0.3.10     # OPCIONAL: descarta imágenes con texto incrustado (requiere Tesseract)
 
