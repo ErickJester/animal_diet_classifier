@@ -24,7 +24,7 @@ Requisitos:
 
 from __future__ import annotations
 
-__version__ = "1.1.0"  # 1.0 fetchers Kaggle/HF/Roboflow + iNat · 1.1 soporte paralelización
+__version__ = "1.2.0"  # 1.0 fetchers Kaggle/HF/Roboflow + iNat · 1.1 soporte paralelización · 1.2 Wikimedia Commons (extintos)
 
 import os
 import warnings
@@ -347,3 +347,96 @@ def iter_inaturalist_photos(species: str, max_photos: int) -> Iterator[Tuple[str
 def _to_medium(url: str) -> str:
     """Las URLs de iNat vienen en tamaño 'square'; pedimos 'medium' (≈500px)."""
     return url.replace("square", "medium")
+
+
+# ── Wikimedia Commons: fotos de especies EXTINTAS (fase C) ────────────────────
+# iNaturalist no sirve para extintos (sus observaciones son de animales vivos).
+# Commons sí tiene reconstrucciones, paleoarte, montajes de museo y fósiles, todo
+# bajo licencias libres. Se busca por nombre (científico o común) en el espacio
+# de archivos y se pide la miniatura + la licencia en una sola llamada.
+def probe_commons() -> Optional[str]:
+    """Comprueba que Wikimedia Commons responde. Devuelve None si OK, o un motivo legible."""
+    if not _REQUESTS_AVAILABLE:
+        return "el paquete 'requests' no está instalado"
+    try:
+        resp = requests.get(
+            config.COMMONS_API_URL,
+            params={"action": "query", "format": "json", "meta": "siteinfo"},
+            headers={"User-Agent": config.HTTP_USER_AGENT},
+            timeout=config.HTTP_TIMEOUT,
+            verify=_verify(),
+        )
+        if resp.status_code == 200:
+            return None
+        return f"respuesta inesperada de Wikimedia Commons (HTTP {resp.status_code})"
+    except Exception as exc:
+        return _explain(exc)
+
+
+def iter_commons_photos(species: str, max_photos: int) -> Iterator[Tuple[str, str]]:
+    """
+    Itera (pageid, url_miniatura) de imágenes de Wikimedia Commons para `species`.
+
+    Busca el término en el espacio de archivos (namespace 6) y devuelve solo
+    imágenes rasterizadas (jpeg/png/webp), descartando diagramas SVG y similares.
+    Paginación acotada por config.COMMONS_MAX_PAGES.
+    """
+    if not _REQUESTS_AVAILABLE or max_photos <= 0:
+        return
+
+    yielded  = 0
+    sroffset = 0
+    for _ in range(config.COMMONS_MAX_PAGES):
+        params = {
+            "action":    "query",
+            "format":    "json",
+            "generator": "search",
+            "gsrsearch": species,
+            "gsrnamespace": 6,                       # espacio "File:"
+            "gsrlimit":  config.COMMONS_SRLIMIT,
+            "gsroffset": sroffset,
+            "prop":      "imageinfo",
+            "iiprop":    "url|extmetadata|mime",
+            "iiurlwidth": config.COMMONS_THUMB_PX,   # genera 'thumburl' a ese ancho
+        }
+        try:
+            resp = requests.get(
+                config.COMMONS_API_URL,
+                params=params,
+                headers={"User-Agent": config.HTTP_USER_AGENT},
+                timeout=config.HTTP_TIMEOUT,
+                verify=_verify(),
+            )
+        except Exception:
+            return
+        if resp.status_code != 200:
+            return
+
+        try:
+            data = resp.json()
+        except Exception:
+            return
+        pages = data.get("query", {}).get("pages", {})
+        if not pages:
+            return
+
+        # 'index' preserva el orden de relevancia de la búsqueda.
+        for _, page in sorted(pages.items(), key=lambda kv: kv[1].get("index", 1e9)):
+            info = (page.get("imageinfo") or [{}])[0]
+            if info.get("mime", "") not in config.COMMONS_MIMES:
+                continue
+            url = info.get("thumburl") or info.get("url")
+            if not url:
+                continue
+            pid = page.get("pageid")
+            if pid is None:
+                continue
+            yield str(pid), url
+            yielded += 1
+            if yielded >= max_photos:
+                return
+
+        cont = data.get("continue", {})
+        if "gsroffset" not in cont:
+            return
+        sroffset = cont["gsroffset"]

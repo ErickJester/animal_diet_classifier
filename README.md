@@ -84,6 +84,33 @@ El flag `--insecure` solo es necesario en redes con proxy corporativo.
 > `downloads/omnivore/` con formato `Genus_species_<photoid>.jpg`.
 > Las imágenes no-animales quedan en `downloads/other/`.
 
+**Fase C — animales EXTINTOS desde Wikimedia Commons** (sin token, API pública):
+
+iNaturalist no sirve para extintos (sus observaciones son de animales vivos), así
+que esta fase usa Wikimedia Commons (reconstrucciones, paleoarte, montajes de museo,
+fósiles). Edita la lista a recopilar y lánzala:
+
+```bash
+# 1. Añade nombres científicos a la lista (editable a mano):
+#    curator/data/extinct_species.json   →  { "species": ["Tyrannosaurus rex", ...] }
+
+# 2. Descarga (auto-investiga la dieta de cada especie desde Wikipedia):
+python download.py extinct --per-species 80 --insecure
+```
+
+La dieta se resuelve así:
+
+- Si la especie está en `diet_labels.json` → se usa esa dieta.
+- Si no, se **auto-investiga** desde el texto de Wikipedia (cuenta menciones de
+  carnívoro/herbívoro/omnívoro). Con confianza ≥ `COMMONS_DIET_MIN_CONF` (0.60) se
+  clasifica; si no, la especie va a `downloads/_unsorted/` a la espera de revisión.
+- Cada dieta auto-investigada se registra en `curator/data/diet_suggestions.json`
+  con su evidencia y fuente. **Revísala y confirma las correctas en `diet_labels.json`**
+  (la dieta nunca se da por definitiva sin que una persona la valide).
+
+> Las imágenes quedan también como `Genus_species_<pageid>.jpg` en la carpeta de su
+> dieta, listas para los pasos 3-5 igual que el resto.
+
 ---
 
 ### 3. Curar el dataset (deduplicación)
@@ -248,6 +275,7 @@ animal_diet_classifier/
 | `animals90` (Kaggle) | masiva, 90 especies | animales | habilitada |
 | `mammals45` (Kaggle) | masiva, 45 mamíferos | animales | habilitada |
 | iNaturalist | verificada por especie, API pública | animales | habilitada |
+| Wikimedia Commons | extintos por especie, API pública | animales | habilitada (fase C) |
 | `other-insects` (Kaggle: IP102) | insectos, fuera de alcance (**mayoría**) | other | habilitada |
 | `other-scenes` (Kaggle: Intel) | paisajes, ciudades, glaciares | other | habilitada |
 | `other-food` (Kaggle: Food-101) | comida y platos | other | habilitada |

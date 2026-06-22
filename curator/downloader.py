@@ -23,9 +23,10 @@ fina (similitud visual) y el reparto train/val son pasos posteriores.
 
 from __future__ import annotations
 
-__version__ = "1.1.0"  # 1.0 fase A+B secuencial · 1.1 ThreadPoolExecutor + reconcile
+__version__ = "1.2.0"  # 1.0 fase A+B secuencial · 1.1 ThreadPoolExecutor + reconcile · 1.2 fase C extintos (Commons)
 
 import hashlib
+import json
 import re
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
@@ -35,12 +36,15 @@ from typing import Dict, Iterator, List, Optional, Tuple
 from . import config
 from .manifest import DownloadManifest
 from .registry import DietLabels
+from .research import research_diet
 from .sources import (
     BULK_SOURCES,
     BulkSource,
     download_url,
     fetch_bulk,
+    iter_commons_photos,
     iter_inaturalist_photos,
+    probe_commons,
     probe_inaturalist,
 )
 
@@ -242,6 +246,149 @@ class DatasetDownloader:
                         self.manifest.add_species(species)
                         got += 1
         return got
+
+    # ── FASE C: animales extintos (Wikimedia Commons + investigación de dieta) ──
+    def supplement_extinct(self, per_species: Optional[int] = None) -> None:
+        """
+        Recopila imágenes de las especies extintas listadas en extinct_species.json.
+
+        Para cada especie:
+          · dieta en diet_labels.json  → descarga a downloads/<dieta>/   (origen: known)
+          · dieta auto-investigada con confianza alta → downloads/<dieta>/ (suggested)
+          · dieta dudosa/desconocida   → downloads/_unsorted/<especie>/  (unknown)
+
+        Las dietas auto-investigadas se vuelcan a diet_suggestions.json para que una
+        persona las confirme luego en diet_labels.json (la dieta nunca se da por
+        definitiva sin revisión). La descarga es reanudable: la dedup por hash MD5
+        evita reescribir contenido ya presente aunque se pierda el manifiesto.
+        """
+        target = per_species or config.COMMONS_PER_SPECIES
+        species_list = self._load_extinct_species()
+        if not species_list:
+            print(f"No hay especies que recopilar en {config.EXTINCT_SPECIES_PATH}.")
+            print("Crea esa lista (un nombre científico por entrada) — ver README, fase C.")
+            return
+
+        problema = probe_commons()
+        if problema:
+            print(f"No puedo usar Wikimedia Commons: {problema}")
+            return
+
+        suggestions = self._load_suggestions()
+        print(f"Recopilando hasta {target} fotos por especie extinta desde Wikimedia Commons\n")
+        total = 0
+        for species in species_list:
+            diet, origin, guess = self._resolve_extinct_diet(species)
+            if guess is not None:   # hubo investigación (suggested o unknown)
+                suggestions[species] = {
+                    "suggested_diet": guess.diet,
+                    "confidence":     round(guess.confidence, 2),
+                    "evidence":       guess.evidence,
+                    "source":         guess.source_url,
+                    "applied":        diet,   # carpeta usada, o null si fue a _unsorted
+                }
+
+            have = self.manifest.species_count(species) if diet else 0
+            if diet and have >= target:
+                print(f"  {species:<26} [{diet:<11}] completa ({have})")
+                continue
+            need = (target - have) if diet else target
+            got  = self._pull_commons(species, diet, need)
+            total += got
+
+            etiqueta = diet if diet else "→ _unsorted"
+            marca = {"known": "", "suggested": " (dieta sugerida)", "unknown": " (sin dieta)"}[origin]
+            print(f"  {species:<26} [{etiqueta:<11}] +{got}{marca}")
+            self.manifest.save()   # incremental: una interrupción pierde, a lo sumo, una especie
+
+        self._save_suggestions(suggestions)
+        self.manifest.save()
+        print(f"\nTotal recopilado en esta pasada: {total}")
+        print(f"Imágenes en: {config.DOWNLOADS_DIR}")
+        if suggestions:
+            print("Dietas auto-investigadas (revísalas y confírmalas en diet_labels.json):")
+            print(f"  {config.DIET_SUGGESTIONS_PATH}")
+
+    def _load_extinct_species(self) -> List[str]:
+        """Nombres a recopilar desde extinct_species.json. Admite lista u objeto."""
+        path = config.EXTINCT_SPECIES_PATH
+        if not path.is_file():
+            return []
+        try:
+            with open(path, encoding="utf-8") as fh:
+                data = json.load(fh)
+        except Exception:
+            return []
+        if isinstance(data, dict):           # {"species": [...]}  o  {nombre: dieta}
+            names = data.get("species") or list(data.keys())
+        else:
+            names = data
+        seen, out = set(), []
+        for n in names:
+            name = str(n).strip()
+            if name and name.lower() not in seen:
+                seen.add(name.lower())
+                out.append(name)
+        return out
+
+    def _resolve_extinct_diet(self, species: str):
+        """(dieta_o_None, origen, DietGuess_o_None). origen ∈ known|suggested|unknown."""
+        known = self.diet_labels.get(species)
+        if known in config.DIET_CLASSES:
+            return known, "known", None
+        guess = research_diet(species)
+        if guess.diet and guess.confidence >= config.COMMONS_DIET_MIN_CONF:
+            return guess.diet, "suggested", guess
+        return None, "unknown", guess
+
+    def _pull_commons(self, species: str, diet: Optional[str], need: int) -> int:
+        # Mismo patrón que iNaturalist: reúne candidatos no vistos, baja en paralelo
+        # y procesa en este hilo (manifiesto y disco sin condiciones de carrera).
+        candidates = [
+            (pid, url)
+            for pid, url in iter_commons_photos(species, max_photos=need * 3)
+            if not self.manifest.seen_photo("commons", pid)
+        ]
+        if not candidates:
+            return 0
+
+        got = 0
+        stats = PhaseStats()
+        workers = config.DOWNLOAD_WORKERS
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            for start in range(0, len(candidates), workers):
+                if got >= need:
+                    break
+                chunk = candidates[start:start + workers]
+                for pid, data in pool.map(lambda c: (c[0], download_url(c[1])), chunk):
+                    self.manifest.add_photo("commons", pid)   # visto, aun si falló
+                    if got >= need or not data:
+                        continue
+                    res = self._place(data, species=species, stem=pid, ext=".jpg",
+                                      stats=stats, known_diet=diet)
+                    if res in ("saved", "unsorted"):
+                        if diet:
+                            self.manifest.add_species(species)
+                        got += 1
+        return got
+
+    def _load_suggestions(self) -> Dict[str, dict]:
+        path = config.DIET_SUGGESTIONS_PATH
+        if not path.is_file():
+            return {}
+        try:
+            with open(path, encoding="utf-8") as fh:
+                return json.load(fh)
+        except Exception:
+            return {}
+
+    def _save_suggestions(self, suggestions: Dict[str, dict]) -> None:
+        if not suggestions:
+            return
+        path = config.DIET_SUGGESTIONS_PATH
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "w", encoding="utf-8") as fh:
+            json.dump(suggestions, fh, ensure_ascii=False, indent=2, sort_keys=True)
 
     # ── colocación de una imagen con dedup por hash ────────────────────────────
     def _place(self, data: bytes, species: str, stem: str, ext: str,

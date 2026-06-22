@@ -7,7 +7,7 @@ desde aquí para evitar valores mágicos dispersos.
 
 from __future__ import annotations
 
-__version__ = "1.3.0"  # 1.0 rutas/umbrales base · 1.1 config descarga · 1.2 DOWNLOAD_WORKERS · 1.3 NEW_SPECIES_SIM+TARGET_PER_SPECIES
+__version__ = "1.4.0"  # 1.0 rutas/umbrales base · 1.1 config descarga · 1.2 DOWNLOAD_WORKERS · 1.3 NEW_SPECIES_SIM+TARGET_PER_SPECIES · 1.4 fase C extintos (Commons + Wikipedia)
 
 from pathlib import Path
 
@@ -24,6 +24,10 @@ DATA_DIR         = ROOT / "curator" / "data"
 INDEX_PATH       = DATA_DIR / "embeddings.npz"        # índice de similitud
 REGISTRY_PATH    = DATA_DIR / "species_registry.json" # especies + nº de fotos
 DIET_LABELS_PATH = DATA_DIR / "diet_labels.json"      # especie → dieta (editable a mano)
+
+# Fase C (animales extintos): entrada y salida del flujo de Wikimedia Commons.
+EXTINCT_SPECIES_PATH  = DATA_DIR / "extinct_species.json"   # lista de extintos a recopilar (editable)
+DIET_SUGGESTIONS_PATH = DATA_DIR / "diet_suggestions.json"  # dietas auto-sugeridas (a revisar a mano)
 
 # ── áreas de trabajo (las imágenes aceptadas se copian aquí, no al dataset) ──────
 STAGING_DIR        = ROOT / "curator" / "staging"
@@ -66,6 +70,19 @@ INAT_PAGE_SIZE   = 50                           # observaciones por página (má
 INAT_MAX_PAGES   = 20                           # cota de seguridad por especie
 INAT_LICENSES    = "cc0,cc-by,cc-by-nc"         # solo fotos con licencia reutilizable
 INAT_OBS_URL     = "https://api.inaturalist.org/v1/observations"  # endpoint público (sin token)
+
+# Fase C (extintos desde Wikimedia Commons — iNaturalist no sirve: son observaciones de vivos):
+COMMONS_API_URL       = "https://commons.wikimedia.org/w/api.php"  # API pública (sin token)
+COMMONS_THUMB_PX      = 500    # ancho del thumbnail a descargar (≈ tamaño "medium" de iNat)
+COMMONS_PER_SPECIES   = 60     # tope de fotos por especie extinta
+COMMONS_SRLIMIT       = 50     # resultados por página de búsqueda (máx. API: 500)
+COMMONS_MAX_PAGES     = 10     # cota de seguridad de paginación por especie
+COMMONS_MIMES         = {"image/jpeg", "image/png", "image/webp"}  # se ignoran svg/tiff/gif
+COMMONS_DIET_MIN_CONF = 0.60   # confianza mínima de la dieta auto-investigada para clasificarla;
+                               # por debajo, la especie va a _unsorted a la espera de revisión
+
+# Investigación automática de dieta (heurística sobre el texto de Wikipedia):
+WIKIPEDIA_API_URL = "https://en.wikipedia.org/w/api.php"  # API pública (sin token)
 
 # HTTP común a las descargas:
 HTTP_TIMEOUT    = 30.0

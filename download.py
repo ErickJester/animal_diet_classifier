@@ -11,6 +11,11 @@ Flujo en dos fases:
       python download.py more
       python download.py more --per-species 60
 
+  Fase C · animales EXTINTOS (Wikimedia Commons + dieta auto-investigada)
+      python download.py extinct
+      python download.py extinct --per-species 80
+      (lee la lista de curator/data/extinct_species.json)
+
   Todo de una:
       python download.py all
 
@@ -64,6 +69,12 @@ def cmd_more(args):
     DatasetDownloader().supplement(per_species=args.per_species)
 
 
+# ── subcomando: extinct (fase C) ──────────────────────────────────────────────
+def cmd_extinct(args):
+    _apply_insecure(args)
+    DatasetDownloader().supplement_extinct(per_species=args.per_species)
+
+
 # ── subcomando: all ───────────────────────────────────────────────────────────
 def cmd_all(args):
     _apply_insecure(args)
@@ -99,6 +110,7 @@ def cmd_status(args):
     print("\n── Anti-repetición ──")
     print(f"    hashes únicos guardados: {len(m.hashes)}")
     print(f"    fotos iNaturalist vistas: {len(m.photo_ids.get('inaturalist', []))}")
+    print(f"    fotos Commons vistas:     {len(m.photo_ids.get('commons', []))}")
     print(f"    fase A intentada: {'sí' if m.phase_a_attempted else 'no'}")
     if not m.phase_a_attempted:
         print("    (la fase B 'more' se habilita tras la primera corrida de 'datasets')")
@@ -132,6 +144,12 @@ def parse_args():
     p_more.add_argument("--insecure", action="store_true",
                         help="omite la verificación TLS (red corporativa con proxy)")
 
+    p_ext = sub.add_parser("extinct", help="fase C: animales extintos desde Wikimedia Commons")
+    p_ext.add_argument("--per-species", type=int, default=None,
+                       help=f"tope de fotos por especie (def. {config.COMMONS_PER_SPECIES})")
+    p_ext.add_argument("--insecure", action="store_true",
+                       help="omite la verificación TLS (red corporativa con proxy)")
+
     p_all = sub.add_parser("all", help="fase A y luego fase B")
     p_all.add_argument("--per-species", type=int, default=None,
                        help=f"tope de fotos por especie (def. {config.SUPP_PER_SPECIES})")
@@ -150,6 +168,7 @@ def main():
     dispatch = {
         "datasets": cmd_datasets,
         "more":     cmd_more,
+        "extinct":  cmd_extinct,
         "all":      cmd_all,
         "status":   cmd_status,
         "sources":  cmd_sources,

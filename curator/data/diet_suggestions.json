@@ -1,0 +1,121 @@
+{
+  "Allosaurus fragilis": {
+    "applied": "carnivore",
+    "confidence": 0.73,
+    "evidence": "menciones → carnivore:8  herbivore:3  omnivore:0",
+    "source": "https://en.wikipedia.org/wiki/Allosaurus_fragilis",
+    "suggested_diet": "carnivore"
+  },
+  "Ankylosaurus magniventris": {
+    "applied": null,
+    "confidence": 0.0,
+    "evidence": "sin artículo de Wikipedia",
+    "source": "https://en.wikipedia.org/wiki/Ankylosaurus_magniventris",
+    "suggested_diet": null
+  },
+  "Archaeopteryx lithographica": {
+    "applied": null,
+    "confidence": 0.0,
+    "evidence": "sin artículo de Wikipedia",
+    "source": "https://en.wikipedia.org/wiki/Archaeopteryx_lithographica",
+    "suggested_diet": null
+  },
+  "Brachiosaurus altithorax": {
+    "applied": null,
+    "confidence": 0.0,
+    "evidence": "sin artículo de Wikipedia",
+    "source": "https://en.wikipedia.org/wiki/Brachiosaurus_altithorax",
+    "suggested_diet": null
+  },
+  "Brontosaurus excelsus": {
+    "applied": "herbivore",
+    "confidence": 0.8,
+    "evidence": "menciones → carnivore:1  herbivore:4  omnivore:0",
+    "source": "https://en.wikipedia.org/wiki/Brontosaurus_excelsus",
+    "suggested_diet": "herbivore"
+  },
+  "Deinonychus antirrhopus": {
+    "applied": "carnivore",
+    "confidence": 0.71,
+    "evidence": "menciones → carnivore:5  herbivore:2  omnivore:0",
+    "source": "https://en.wikipedia.org/wiki/Deinonychus_antirrhopus",
+    "suggested_diet": "carnivore"
+  },
+  "Diplodocus carnegii": {
+    "applied": null,
+    "confidence": 0.0,
+    "evidence": "el artículo no menciona la dieta",
+    "source": "https://en.wikipedia.org/wiki/Diplodocus_carnegii",
+    "suggested_diet": null
+  },
+  "Dunkleosteus terrelli": {
+    "applied": null,
+    "confidence": 0.0,
+    "evidence": "sin artículo de Wikipedia",
+    "source": "https://en.wikipedia.org/wiki/Dunkleosteus_terrelli",
+    "suggested_diet": null
+  },
+  "Gallimimus bullatus": {
+    "applied": null,
+    "confidence": 0.0,
+    "evidence": "sin artículo de Wikipedia",
+    "source": "https://en.wikipedia.org/wiki/Gallimimus_bullatus",
+    "suggested_diet": null
+  },
+  "Mammuthus primigenius": {
+    "applied": null,
+    "confidence": 0.0,
+    "evidence": "sin artículo de Wikipedia",
+    "source": "https://en.wikipedia.org/wiki/Mammuthus_primigenius",
+    "suggested_diet": null
+  },
+  "Megatherium americanum": {
+    "applied": null,
+    "confidence": 0.0,
+    "evidence": "sin artículo de Wikipedia",
+    "source": "https://en.wikipedia.org/wiki/Megatherium_americanum",
+    "suggested_diet": null
+  },
+  "Smilodon fatalis": {
+    "applied": null,
+    "confidence": 0.59,
+    "evidence": "menciones → carnivore:13  herbivore:9  omnivore:0",
+    "source": "https://en.wikipedia.org/wiki/Smilodon_fatalis",
+    "suggested_diet": "carnivore"
+  },
+  "Spinosaurus aegyptiacus": {
+    "applied": "carnivore",
+    "confidence": 0.67,
+    "evidence": "menciones → carnivore:8  herbivore:3  omnivore:1",
+    "source": "https://en.wikipedia.org/wiki/Spinosaurus_aegyptiacus",
+    "suggested_diet": "carnivore"
+  },
+  "Stegosaurus stenops": {
+    "applied": "herbivore",
+    "confidence": 1.0,
+    "evidence": "menciones → carnivore:0  herbivore:6  omnivore:0",
+    "source": "https://en.wikipedia.org/wiki/Stegosaurus_stenops",
+    "suggested_diet": "herbivore"
+  },
+  "Triceratops horridus": {
+    "applied": "herbivore",
+    "confidence": 1.0,
+    "evidence": "menciones → carnivore:0  herbivore:2  omnivore:0",
+    "source": "https://en.wikipedia.org/wiki/Triceratops_horridus",
+    "suggested_diet": "herbivore"
+  },
+  "Tyrannosaurus rex": {
+    "applied": "carnivore",
+    "confidence": 0.8,
+    "evidence": "menciones → carnivore:12  herbivore:3  omnivore:0",
+    "source": "https://en.wikipedia.org/wiki/Tyrannosaurus_rex",
+    "suggested_diet": "carnivore"
+  },
+  "Velociraptor mongoliensis": {
+    "applied": "carnivore",
+    "confidence": 1.0,
+    "evidence": "menciones → carnivore:3  herbivore:0  omnivore:0",
+    "source": "https://en.wikipedia.org/wiki/Velociraptor_mongoliensis",
+    "suggested_diet": "carnivore"
+  }
+}

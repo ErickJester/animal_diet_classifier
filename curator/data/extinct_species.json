@@ -1,0 +1,22 @@
+{
+  "_comment": "Lista de animales EXTINTOS a recopilar desde Wikimedia Commons (fase C). Edita 'species' con nombres científicos (Genus species). La dieta se toma de diet_labels.json si está; si no, se auto-investiga desde Wikipedia y la sugerencia queda en diet_suggestions.json para que la confirmes.",
+  "species": [
+    "Tyrannosaurus rex",
+    "Velociraptor mongoliensis",
+    "Spinosaurus aegyptiacus",
+    "Allosaurus fragilis",
+    "Deinonychus antirrhopus",
+    "Smilodon fatalis",
+    "Dunkleosteus terrelli",
+    "Triceratops horridus",
+    "Stegosaurus stenops",
+    "Brontosaurus excelsus",
+    "Diplodocus carnegii",
+    "Brachiosaurus altithorax",
+    "Ankylosaurus magniventris",
+    "Mammuthus primigenius",
+    "Megatherium americanum",
+    "Gallimimus bullatus",
+    "Archaeopteryx lithographica"
+  ]
+}

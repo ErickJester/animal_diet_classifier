@@ -1,6 +1,6 @@
 {
-  "schema_version": "1.0.0",
-  "description": "Base de conocimiento morfológico para inferir dieta (carnívoro / herbívoro / omnívoro) a partir de rasgos físicos observables. Pensado como PLAN B del clasificador: cuando el reconocimiento de especie falla o tiene baja confianza, se puntúan los rasgos visibles de la foto y se suman ponderados hasta alcanzar un umbral de confianza.",
+  "schema_version": "1.1.0",
+  "description": "Base de conocimiento morfológico para inferir dieta (carnívoro / herbívoro / omnívoro) a partir de rasgos físicos observables. Pensado como PLAN C del clasificador: cuando el reconocimiento de especie falla o tiene baja confianza, se puntúan los rasgos visibles de la foto y se suman ponderados hasta alcanzar un umbral de confianza. v1.1 añade estados para taxones EXTINTOS no mamíferos (dientes serrados de terópodo, picos córneos de dinosaurios herbívoros, baterías dentales) ya que la base original era mamífero/ave-céntrica.",
 
   "classes": ["carnivore", "herbivore", "omnivore"],
 
@@ -81,11 +81,11 @@
       "states": {
         "mostly_pointed": {
           "affinity": {"carnivore": 0.75, "herbivore": 0.05, "omnivore": 0.20},
-          "note": "Dentadura predominantemente puntiaguda (cuando no se distinguen dientes individuales)."
+          "note": "Dentadura predominantemente puntiaguda (cuando no se distinguen dientes individuales). Incluye dientes serrados, recurvados y en forma de cuchilla de los terópodos (T. rex, Allosaurus, Velociraptor): señal fuerte de carnívoro extinto."
         },
         "mostly_flat": {
           "affinity": {"carnivore": 0.03, "herbivore": 0.82, "omnivore": 0.15},
-          "note": "Dentadura predominantemente plana / aplanada."
+          "note": "Dentadura predominantemente plana / aplanada. Incluye las baterías dentales de molienda de hadrosaurios y ceratopsios (cientos de dientes apretados para procesar vegetación): señal fuerte de herbívoro extinto."
         },
         "mixed": {
           "affinity": {"carnivore": 0.12, "herbivore": 0.18, "omnivore": 0.70},
@@ -181,7 +181,7 @@
       "states": {
         "sharp_claws_or_talons": {
           "affinity": {"carnivore": 0.70, "herbivore": 0.02, "omnivore": 0.28},
-          "note": "Garras o talones curvos y afilados para sujetar/matar presa (felinos, rapaces)."
+          "note": "Garras o talones curvos y afilados para sujetar/matar presa (felinos, rapaces, y garras de terópodos como la hoz de Velociraptor/Deinonychus)."
         },
         "hooves": {
           "affinity": {"carnivore": 0.01, "herbivore": 0.95, "omnivore": 0.04},
@@ -199,9 +199,9 @@
     },
     {
       "id": "beak_shape",
-      "name": "Forma del pico (solo aves)",
+      "name": "Forma del pico (aves y taxones con pico)",
       "visible_in_photo": true,
-      "applies_to": "birds",
+      "applies_to": "birds_and_beaked_taxa",
       "reliability": 2.5,
       "states": {
         "hooked_raptorial": {
@@ -219,6 +219,10 @@
         "generalist_medium": {
           "affinity": {"carnivore": 0.15, "herbivore": 0.25, "omnivore": 0.60},
           "note": "Pico medio generalista (cuervos, gaviotas): omnívoros oportunistas."
+        },
+        "toothless_cropping_beak": {
+          "affinity": {"carnivore": 0.05, "herbivore": 0.80, "omnivore": 0.15},
+          "note": "Pico córneo sin dientes para cortar/arrancar vegetación: tortugas y dinosaurios herbívoros con pico (ceratopsios, hadrosaurios, ornitisquios, ornitomímidos como Gallimimus). Señal fuerte de herbívoro."
         }
       }
     },
