@@ -95,7 +95,7 @@ class DatasetDownloader:
                 self.manifest.save()
                 continue
 
-            stats = self._reorganize(path)
+            stats = self._reorganize(path, src)
             self.manifest.mark_dataset(src.ref, "done", images=stats.saved)
             self.manifest.save()
             print(f"    guardadas {stats.saved}  (dup {stats.dups}, sin clasificar {stats.unsorted})")
@@ -105,10 +105,20 @@ class DatasetDownloader:
 
         self.manifest.save()
 
-    def _reorganize(self, raw_path: Path) -> PhaseStats:
-        """Recorre las imágenes crudas; la carpeta contenedora es la 'especie'."""
+    def _reorganize(self, raw_path: Path, source: Optional[BulkSource] = None) -> PhaseStats:
+        """Recorre las imágenes crudas; la carpeta contenedora es la 'especie'.
+
+        Si la fuente fija `fixed_diet` (p.ej. la clase "other"), toda imagen se
+        etiqueta con esa dieta sin pasar por el registro de especies. `max_images`
+        (si > 0) corta la fuente al alcanzar ese nº de imágenes guardadas — útil
+        para mantener balanceada una clase como "other".
+        """
         stats = PhaseStats()
+        fixed_diet = source.fixed_diet if source else None
+        cap        = source.max_images if source else 0
         for img in sorted(raw_path.rglob("*")):
+            if cap and stats.saved >= cap:
+                break
             if img.suffix.lower() not in config.IMG_EXTS or not img.is_file():
                 continue
             species = img.parent.name
@@ -117,7 +127,7 @@ class DatasetDownloader:
             except Exception:
                 continue
             self._place(data, species=species, stem=img.stem, ext=img.suffix.lower(),
-                        stats=stats)
+                        stats=stats, known_diet=fixed_diet)
         return stats
 
     # ── FASE B: suplemento verificado (iNaturalist) ────────────────────────────
@@ -175,6 +185,8 @@ class DatasetDownloader:
         counts: Dict[str, int] = {}
         recuperadas = 0
         for diet in config.DIET_CLASSES:
+            if diet == "other":
+                continue   # 'other' (no-animal) no viene de iNaturalist: sin patrón Genus_species_<id>
             folder = config.DOWNLOADS_DIR / diet
             if not folder.is_dir():
                 continue

@@ -51,7 +51,7 @@ DOWNLOADS_DIR = ROOT / "downloads"
 STAGING_DIR   = ROOT / "curator" / "staging"
 DATASET_DIR   = ROOT / "dataset"
 DIET_LABELS   = ROOT / "curator" / "data" / "diet_labels.json"
-DIET_CLASSES  = ["carnivore", "herbivore", "omnivore"]
+DIET_CLASSES  = ["carnivore", "herbivore", "omnivore", "other"]
 IMG_EXTS      = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
 EXCLUDE_PARTS = {"_raw"}   # carpetas intermedias que no deben procesarse
 
@@ -173,7 +173,11 @@ def prepare(sources: List[Path], val_ratio: float, dry_run: bool) -> None:
             continue
 
         species = species_from_filename(img)
-        diet    = lookup_diet(species, labels)
+        # Si la imagen ya vive en una carpeta de clase (downloads/<diet>/ o
+        # staging/<diet>/), esa carpeta manda — imprescindible para clases
+        # pre-clasificadas como "other" (no-animal), que no están en
+        # diet_labels.json. Si no, se infiere la dieta desde la especie.
+        diet = img.parent.name if img.parent.name in DIET_CLASSES else lookup_diet(species, labels)
         if diet is None:
             unknown.append(f"{img.name}  [{species}]")
             continue

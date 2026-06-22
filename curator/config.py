@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parent.parent
 
 # ── dataset existente (organizado por dieta, no por especie) ────────────────────
 DATASET_DIR  = ROOT / "dataset"
-DIET_CLASSES = ["carnivore", "herbivore", "omnivore"]
+DIET_CLASSES = ["carnivore", "herbivore", "omnivore", "other"]
 SPLITS       = ["train", "val"]
 
 # ── datos persistentes del curador ──────────────────────────────────────────────

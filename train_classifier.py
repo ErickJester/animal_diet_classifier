@@ -70,7 +70,7 @@ except ImportError:
     print("  pip install torch torchvision")
     sys.exit(1)
 
-CLASSES     = ["carnivore", "herbivore", "omnivore"]
+CLASSES     = ["carnivore", "herbivore", "omnivore", "other"]
 NUM_CLASSES = len(CLASSES)
 INPUT_SIZE  = 224
 IMAGENET_MEAN = [0.485, 0.456, 0.406]

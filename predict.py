@@ -7,7 +7,8 @@ Uso:
     python predict.py foto1.jpg foto2.png --device cpu
 
 Carga DietClassifier (ResNet-18 primario, ResNet-50 respaldo) y reporta
-la clase predicha (carnivore | herbivore | omnivore) con su confianza.
+la clase predicha (carnivore | herbivore | omnivore | other) con su confianza.
+"other" significa que la imagen no parece contener un animal.
 
 Requiere pesos entrenados en weights/diet_resnet18.pt y/o weights/diet_resnet50.pt.
 """

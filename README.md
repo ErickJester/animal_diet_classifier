@@ -1,10 +1,37 @@
 # Animal Diet Classifier
 
 Clasificador de **dieta animal** a partir de una foto: dice si el animal es
-**carnívoro**, **herbívoro** u **omnívoro**.
+**carnívoro**, **herbívoro** u **omnívoro** — y rechaza imágenes que no contienen un animal.
 
-Basado en la misma arquitectura del clasificador FST: CNN ResNet con cascada
-de confianza (ResNet-18 primario rápido → ResNet-50 respaldo más preciso).
+Arquitectura CNN ResNet con cascada de confianza:
+ResNet-18 (primario, rápido) → ResNet-50 (respaldo, más preciso) → morfología (último recurso).
+
+---
+
+## Clases del modelo
+
+| Clase | Significado |
+|---|---|
+| `carnivore` | Come principalmente carne |
+| `herbivore` | Come principalmente vegetales |
+| `omnivore` | Come de ambos tipos |
+| `other` | La imagen **no** contiene un animal |
+
+La clase `other` es la clase negativa: se entrena con imágenes de escenas, comida
+y objetos (~10k imágenes, balanceada con las clases animales) para que el modelo
+rechace entradas que no debería clasificar como dieta.
+
+---
+
+## Cómo funciona la cascada
+
+1. **ResNet-18** clasifica la foto. Si la confianza ≥ `0.65` → devuelve ese resultado.
+2. Si la confianza es menor y existe el modelo de respaldo → se ejecuta **ResNet-50**.
+3. Si ambos modelos tienen baja confianza (o no están disponibles), el módulo de
+   **morfología** analiza rasgos físicos (posición de ojos, dentadura, extremidades).
+
+La webapp muestra la nota "llegamos a este resultado analizando las características
+físicas del animal" solo cuando se activa el módulo de morfología.
 
 ---
 
@@ -26,7 +53,16 @@ pip install -r requirements.txt
 python download.py datasets
 ```
 
-Descarga `animals90` y `mammals45` desde Kaggle (~20k imágenes) a `downloads/`.
+Descarga `animals90` y `mammals45` desde Kaggle (~20k imágenes animales) a `downloads/`.
+
+Para descargar también las fuentes no-animales (`other`):
+
+```bash
+python download.py datasets --only other-scenes other-food
+```
+
+Las imágenes quedan en `downloads/other/` (ya etiquetadas, no pasan por el registro de especies).
+
 Las fuentes `animals10`, `roboflow-ch` y `hf-big-animals` están deshabilitadas
 por defecto en `curator/sources.py` (ver comentarios para activarlas).
 
@@ -39,8 +75,9 @@ python download.py more --per-species 300 --insecure
 Baja fotos adicionales por especie con identificación verificada por la comunidad.
 El flag `--insecure` solo es necesario en redes con proxy corporativo.
 
-> Las imágenes quedan en `downloads/carnivore/`, `downloads/herbivore/`,
+> Las imágenes animales quedan en `downloads/carnivore/`, `downloads/herbivore/`,
 > `downloads/omnivore/` con formato `Genus_species_<photoid>.jpg`.
+> Las imágenes no-animales quedan en `downloads/other/`.
 
 ---
 
@@ -72,9 +109,7 @@ Con ambos umbrales en 0.95 el curador actúa como **quita-duplicados puro**:
 solo descarta fotos prácticamente calcadas y conserva toda la variedad.
 
 > **Sin token de iNaturalist:** el curador decide solo por similitud visual.
-> La identificación de especie (Etapa 2) se desactiva automáticamente y
-> `TARGET_PER_SPECIES` no tiene efecto. Para obtener un token gratuito:
-> https://www.inaturalist.org/users/api_token
+> Para obtener un token gratuito: https://www.inaturalist.org/users/api_token
 
 **Alternativa sin curar:** si quieres saltar la deduplicación, usa `prepare.py`
 directamente (ver paso 4).
@@ -87,10 +122,10 @@ Si usaste `curate.py commit`, el dataset ya está listo en `dataset/`.
 
 Si saltaste la curación, `prepare.py` organiza las imágenes de `downloads/`
 directamente — infiere la dieta desde el nombre de archivo (`Genus_species_...`)
-y hace el split 80/20:
+o desde la carpeta contenedora (para `downloads/other/`) y hace el split 80/20:
 
 ```bash
-python prepare.py downloads/carnivore downloads/herbivore downloads/omnivore
+python prepare.py downloads/carnivore downloads/herbivore downloads/omnivore downloads/other
 ```
 
 Es idempotente: re-ejecutarlo no duplica imágenes ya presentes en `dataset/`.
@@ -111,13 +146,13 @@ Genera `weights/diet_resnet18.pt` y `weights/diet_resnet50.pt`.
 
 Opciones útiles: `--batch-size`, `--lr`, `--freeze-backbone`, `--device cpu|cuda|mps`.
 
+**Para entrenar en Google Colab** (GPU gratis/Pro):
+usa el notebook en `colab/train_diet_classifier.ipynb` — es autónomo, no requiere
+clonar el repositorio; sube `dataset.zip` a tu Drive y listo.
+
 ---
 
 ### 6. Evaluar con cross-validation (opcional)
-
-Una vez entrenado el modelo, evalúa su generalización con k-fold estratificado.
-Cada fold arranca desde los pesos ya ajustados (no desde ImageNet), por lo que
-solo necesita 10 épocas para converger:
 
 ```bash
 # 5 folds, 10 épocas por fold (default)
@@ -136,6 +171,18 @@ agregada de todos los folds.
 ---
 
 ### 7. Clasificar fotos
+
+**Interfaz web:**
+
+```bash
+cd webapp
+python app.py
+```
+
+Abre `http://localhost:5000` — sube una foto con drag-drop, selector de archivo
+o pegar desde el portapapeles (Ctrl+V) y obtén el resultado con animación de análisis.
+
+**CLI:**
 
 ```bash
 python predict.py mi_foto.jpg
@@ -156,21 +203,31 @@ animal_diet_classifier/
 ├── prepare.py              # organiza downloads/ → dataset/train/ y dataset/val/
 ├── download.py             # descarga datasets masivos + suplemento iNaturalist
 ├── curator/                # paquete del curador
-│   ├── config.py           #   umbrales, rutas y constantes
+│   ├── config.py           #   umbrales, rutas y constantes (DIET_CLASSES aquí)
 │   ├── embeddings.py       #   extractor de embeddings visuales (ResNet feature)
 │   ├── index.py            #   índice de similitud (coseno, persistente)
-│   ├── inaturalist.py      #   identificación de especie vía API (requiere token)
+│   ├── inaturalist.py      #   identificación de especie vía API
 │   ├── registry.py         #   registro de especies + etiquetas de dieta
-│   ├── curator.py          #   orquestador de la cascada (opción C)
+│   ├── sources.py          #   declaración de fuentes (Kaggle, HF, iNaturalist)
+│   ├── curator.py          #   orquestador de la cascada
 │   └── data/               #   diet_labels.json + índice/registro generados
+├── colab/
+│   └── train_diet_classifier.ipynb  # notebook autónomo para entrenar en Colab
+├── webapp/
+│   ├── app.py              # servidor Flask (API /api/predict + página web)
+│   ├── templates/index.html
+│   └── static/
+│       ├── script.js       # lógica del cliente (upload, animación, resultado)
+│       └── style.css       # tema oscuro con animación de escaneo
 ├── requirements.txt
 ├── dataset/                # imágenes etiquetadas por carpeta (generado)
-│   ├── train/{carnivore,herbivore,omnivore}/
-│   └── val/{carnivore,herbivore,omnivore}/
-├── downloads/              # imágenes descargadas por dieta (generado)
+│   ├── train/{carnivore,herbivore,omnivore,other}/
+│   └── val/{carnivore,herbivore,omnivore,other}/
+├── downloads/              # imágenes descargadas (generado)
 │   ├── carnivore/
 │   ├── herbivore/
-│   └── omnivore/
+│   ├── omnivore/
+│   └── other/
 └── weights/                # modelos entrenados (generado)
     ├── diet_resnet18.pt
     ├── diet_resnet50.pt
@@ -179,21 +236,24 @@ animal_diet_classifier/
 
 ---
 
-## Clases
+## Fuentes de datos
 
-`carnivore` (0) · `herbivore` (1) · `omnivore` (2)
+| Fuente | Tipo | Clase | Estado |
+|---|---|---|---|
+| `animals90` (Kaggle) | masiva, 90 especies | animales | habilitada |
+| `mammals45` (Kaggle) | masiva, 45 mamíferos | animales | habilitada |
+| iNaturalist | verificada por especie, API pública | animales | habilitada |
+| `other-scenes` (Kaggle: Intel) | paisajes, ciudades, glaciares | other | habilitada |
+| `other-food` (Kaggle: Food-101) | comida y platos | other | habilitada |
+| `other-objects` | objetos/personas | other | deshabilitada (verifica slug) |
+| `animals10` (Kaggle) | masiva, 28k imgs en italiano | animales | deshabilitada |
+| `roboflow-ch` | ya etiquetada por dieta | animales | deshabilitada (falta API key) |
+| `hf-big-animals` (HuggingFace) | dataset grande variado | animales | deshabilitada |
 
----
+Para activar una fuente deshabilitada: editar `enabled=True` en `curator/sources.py`.
 
-## Cómo funciona la cascada
-
-1. **ResNet-18** clasifica la foto. Si la confianza ≥ `0.65` → devuelve ese resultado.
-2. Si la confianza es menor (y existe el modelo de respaldo), se ejecuta **ResNet-50**
-   y se devuelve su resultado.
-3. Si solo existe ResNet-18, se devuelve su resultado aunque la confianza sea baja.
-
-Si torch/torchvision no están instalados o faltan los pesos, `clf.is_available`
-es `False` y nada lanza excepción al importar.
+Las fuentes `other-*` tienen un tope `max_images` (5500 + 4500 = ~10k) para
+mantener la clase `other` balanceada con las clases animales (~10k cada una).
 
 ---
 
@@ -207,19 +267,8 @@ if clf.is_available:
     res = clf.classify_image("animal.jpg")
     print(res.label, res.confidence, res.source)
     # p.ej.  carnivore 0.91 resnet18
+    # p.ej.  other 0.97 resnet50   ← imagen sin animal
 ```
 
----
-
-## Fuentes de datos
-
-| Fuente | Tipo | Estado |
-|---|---|---|
-| `animals90` (Kaggle) | masiva, 90 especies | habilitada |
-| `mammals45` (Kaggle) | masiva, 45 mamíferos | habilitada |
-| iNaturalist | verificada por especie, API pública | habilitada |
-| `animals10` (Kaggle) | masiva, 28k imgs en italiano | deshabilitada |
-| `roboflow-ch` | ya etiquetada por dieta | deshabilitada (falta API key) |
-| `hf-big-animals` (HuggingFace) | dataset grande variado | deshabilitada |
-
-Para activar una fuente deshabilitada: editar `enabled=True` en `curator/sources.py`.
+Si torch/torchvision no están instalados o faltan los pesos, `clf.is_available`
+es `False` y nada lanza excepción al importar.

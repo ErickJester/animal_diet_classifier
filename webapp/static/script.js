@@ -10,6 +10,7 @@ const DISPLAY = {
   carnivore: { name: "Carnívoro",   emoji: "🦁", cls: "diet-carnivore" },
   herbivore: { name: "Herbívoro",   emoji: "🦌", cls: "diet-herbivore" },
   omnivore:  { name: "Omnívoro",    emoji: "🐻", cls: "diet-omnivore"  },
+  other:     { name: "No es un animal", emoji: "🚫", cls: "diet-other" },
   unknown:   { name: "Desconocido", emoji: "❓", cls: "diet-unknown"   },
 };
 
@@ -159,6 +160,17 @@ function reveal(data) {
     const msg = (data && data.error) || "Error desconocido.";
     resultEl.className = "result error-result show";
     resultEl.innerHTML = `<div class="err">⚠️ ${msg}</div>`;
+    return;
+  }
+
+  // "other" = la imagen no es un animal → rechazo claro, sin marco de dieta.
+  if (data.label === "other") {
+    resultEl.className = "result show diet-other";
+    resultEl.innerHTML = `
+      <div class="result-emoji">🚫</div>
+      <div class="result-name">No es un animal</div>
+      <div class="conf-label">No detectamos un animal en la imagen. Prueba con otra foto.</div>
+    `;
     return;
   }
 

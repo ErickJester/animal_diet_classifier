@@ -5,7 +5,7 @@ Arquitectura dual (cascada de confianza):
   Primario  — ResNet-18  (rápido, liviano)
   Respaldo  — ResNet-50  (más preciso, activa cuando confianza < umbral)
 
-Clases: carnivore (0) | herbivore (1) | omnivore (2)
+Clases: carnivore (0) | herbivore (1) | omnivore (2) | other (3 = no es un animal)
 
 Uso:
     clf = DietClassifier()
@@ -39,7 +39,7 @@ except ImportError:
     pass
 
 # ── constantes ────────────────────────────────────────────────────────────────
-CLASSES       = ["carnivore", "herbivore", "omnivore"]
+CLASSES       = ["carnivore", "herbivore", "omnivore", "other"]
 NUM_CLASSES   = len(CLASSES)
 INPUT_SIZE    = 224          # estándar ResNet
 IMAGENET_MEAN = [0.485, 0.456, 0.406]

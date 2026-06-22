@@ -107,6 +107,10 @@ class BulkSource:
     ref:     str           # slug/repo/coordenadas según la fuente
     note:    str = ""      # descripción legible
     enabled: bool = True    # las que requieren datos a completar van en False
+    fixed_diet: Optional[str] = None  # si se fija, TODA la fuente se etiqueta con esta
+                                       # dieta (p.ej. "other") sin pasar por diet_labels.json
+    max_images: int = 0                # tope de imágenes a guardar (0 = sin tope); útil
+                                       # para mantener balanceada una clase como "other"
 
 
 # Sólo las habilitadas se intentan por defecto. Las deshabilitadas necesitan que
@@ -145,6 +149,40 @@ BULK_SOURCES = [
         ref="Isamu136/big-animal-dataset",
         note="Hugging Face — dataset grande y variado de animales",
         enabled=False,   # verifica el repo_id y que venga como carpetas de imágenes
+    ),
+
+    # ── clase "other" (NO animal) ──────────────────────────────────────────────
+    # Fuentes PURAMENTE no-animales: enseñan al modelo a rechazar lo que no es un
+    # animal (objetos, comida, paisajes, personas). fixed_diet="other" salta el
+    # registro de especies (toda la fuente es "other"); max_images mantiene la
+    # clase balanceada (~10k en total, el promedio de las otras tres clases).
+    # IMPORTANTE: no metas aquí datasets con carpetas de animales (gato/perro/…),
+    # los etiquetaría como "other", justo lo contrario de lo que queremos.
+    BulkSource(
+        name="other-scenes",
+        kind="kaggle",
+        ref="puneet6060/intel-image-classification",
+        note="Intel Image Classification — escenas/paisajes/edificios/calle (no-animal)",
+        fixed_diet="other",
+        max_images=5500,
+    ),
+    BulkSource(
+        name="other-food",
+        kind="kaggle",
+        ref="kmader/food41",
+        note="Food-101 — platos de comida (no-animal). Verifica el slug si la descarga falla.",
+        fixed_diet="other",
+        max_images=4500,
+    ),
+    BulkSource(
+        name="other-objects",
+        kind="kaggle",
+        ref="usuario/dataset-de-objetos-no-animales",   # ← completa con un slug real
+        note="Objetos/personas no-animales — da variedad a 'other'. Completa el slug "
+             "o usa una carpeta local con prepare.py (ver README).",
+        enabled=False,   # requiere que verifiques/completes el slug antes de activarla
+        fixed_diet="other",
+        max_images=3000,
     ),
 ]
 

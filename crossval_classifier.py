@@ -52,7 +52,7 @@ except ImportError:
     print("  pip install torch torchvision Pillow")
     sys.exit(1)
 
-CLASSES       = ["carnivore", "herbivore", "omnivore"]
+CLASSES       = ["carnivore", "herbivore", "omnivore", "other"]
 NUM_CLASSES   = len(CLASSES)
 CLASS_TO_IDX  = {c: i for i, c in enumerate(CLASSES)}
 INPUT_SIZE    = 224
