@@ -3,56 +3,87 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Clasificador de Dieta Animal</title>
+  <title>Gabinete de Historia Natural · Clasificación de Dieta</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Playfair+Display:ital,wght@0,600;0,700;0,800;0,900;1,700&family=Special+Elite&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-  <div class="aurora"></div>
+  <!-- Texturas de papel: manchas de archivo y grano (decorativas) -->
+  <div class="foxing" aria-hidden="true"></div>
+  <div class="grain" aria-hidden="true"></div>
 
-  <main class="app">
-    <header class="head">
-      <h1>Clasificador de Dieta Animal</h1>
-      <p class="sub">Sube una foto y descubre si el animal es
-        <span class="t-carn">carnívoro</span>,
-        <span class="t-herb">herbívoro</span> u
-        <span class="t-omni">omnívoro</span>.</p>
+  <main class="sheet">
+    <!-- Membrete grabado del gabinete -->
+    <header class="letterhead">
+      <div class="crest" aria-hidden="true">&#10087;</div>
+      <div class="letterhead-text">
+        <p class="institution">Gabinete de Historia Natural</p>
+        <p class="department">Sección de Clasificación de Dieta</p>
+      </div>
+      <div class="specimen-tag">
+        <span class="tag-label">Espécimen</span>
+        <span class="tag-no" id="specimen-no">N.º 00-000</span>
+      </div>
     </header>
 
-    <section class="card">
-      <!-- Zona de subida / preview -->
-      <label id="drop-zone" class="drop-zone" for="file-input">
-        <input id="file-input" type="file" accept="image/*" hidden>
+    <div class="rule-double" aria-hidden="true"></div>
 
-        <div id="placeholder" class="placeholder">
-          <div class="ph-icon">📷</div>
-          <div class="ph-title">Arrastra una foto aquí</div>
-          <div class="ph-hint">haz clic para elegir · o pega con <kbd>Ctrl</kbd>+<kbd>V</kbd></div>
-        </div>
+    <!-- Cuerpo: montura del espécimen + ficha de catálogo -->
+    <div class="card-body">
+      <!-- Montura del espécimen (zona de subida) -->
+      <section class="mount-col">
+        <label id="mount" class="mount" for="file-input">
+          <input id="file-input" type="file" accept="image/*" hidden>
 
-        <div id="preview-wrap" class="preview-wrap" hidden>
-          <img id="preview-img" class="preview-img" alt="Vista previa del animal">
-          <div class="scan-veil"></div>
-          <div class="scan-grid"></div>
-          <div class="scanline"></div>
-        </div>
-      </label>
+          <div id="mount-placeholder" class="mount-placeholder">
+            <span class="corner tl"></span><span class="corner tr"></span>
+            <span class="corner bl"></span><span class="corner br"></span>
+            <div class="mount-hand">&mdash; fija aquí tu espécimen &mdash;</div>
+            <div class="mount-hint">arrástralo &middot; haz clic para elegir &middot;
+              o pégalo con <kbd>Ctrl</kbd>+<kbd>V</kbd></div>
+          </div>
 
-      <!-- Mensajes de análisis -->
-      <div id="status" class="status"></div>
+          <div id="specimen" class="specimen" hidden>
+            <span class="corner tl"></span><span class="corner tr"></span>
+            <span class="corner bl"></span><span class="corner br"></span>
+            <img id="specimen-img" class="specimen-img" alt="Espécimen en estudio">
+            <div class="lens" aria-hidden="true">
+              <span class="lens-glass"></span>
+              <span class="lens-handle"></span>
+            </div>
+          </div>
+        </label>
+        <p class="plate-caption" id="scan-status"></p>
+      </section>
 
-      <!-- Resultado en grande -->
-      <div id="result" class="result"></div>
+      <!-- Ficha de catálogo -->
+      <section class="ledger">
+        <dl class="fields">
+          <div class="field"><dt>Reino</dt><span class="lead" aria-hidden="true"></span><dd class="filled">Animalia</dd></div>
+          <div class="field"><dt>Orden</dt><span class="lead" aria-hidden="true"></span><dd></dd></div>
+          <div class="field"><dt>Hábitat</dt><span class="lead" aria-hidden="true"></span><dd></dd></div>
+          <div class="field"><dt>Determinación</dt><span class="lead" aria-hidden="true"></span><dd id="field-det" class="hand"></dd></div>
+          <div class="field"><dt>Catalogado por</dt><span class="lead" aria-hidden="true"></span><dd class="filled small">Visión artificial</dd></div>
+          <div class="field"><dt>Fecha</dt><span class="lead" aria-hidden="true"></span><dd class="filled small" id="field-date"></dd></div>
+        </dl>
+        <p class="margin-note">ejemplar en estudio…</p>
+      </section>
+    </div>
 
-      <!-- Botones -->
-      <div class="actions">
-        <button id="analyze-btn" class="btn btn-primary" disabled>Analizar</button>
-        <button id="reset-btn" class="btn btn-ghost" disabled>Otra foto</button>
-      </div>
-    </section>
+    <!-- Veredicto: aquí cae el sello de la determinación -->
+    <div id="verdict" class="verdict" aria-live="polite"></div>
 
-    <footer class="foot">
-      Clasificador de dieta animal basado en visión por computadora.
+    <!-- Acciones -->
+    <div class="actions">
+      <button id="analyze-btn" class="btn btn-stamp" disabled>Analizar espécimen</button>
+      <button id="reset-btn" class="btn btn-ink" disabled>Nuevo espécimen</button>
+    </div>
+
+    <footer class="colophon">
+      Determinación de dieta por examen visual del ejemplar &mdash;
+      carnívoro, herbívoro u omnívoro.
     </footer>
   </main>
 

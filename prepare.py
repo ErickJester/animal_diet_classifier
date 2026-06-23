@@ -28,10 +28,11 @@ dataset/). Copia (no mueve), así la fuente queda intacta para re-correr.
 
 from __future__ import annotations
 
-__version__ = "1.0.0"  # 1.0 split train/val desde staging o downloads
+__version__ = "1.0.1"  # 1.0.1 excluir _pending_review/_unidentified; strip hex hashes
 
 import argparse
 import json
+import re
 import shutil
 import sys
 from collections import defaultdict
@@ -53,7 +54,8 @@ DATASET_DIR   = ROOT / "dataset"
 DIET_LABELS   = ROOT / "curator" / "data" / "diet_labels.json"
 DIET_CLASSES  = ["carnivore", "herbivore", "omnivore", "other"]
 IMG_EXTS      = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
-EXCLUDE_PARTS = {"_raw"}   # carpetas intermedias que no deben procesarse
+EXCLUDE_PARTS = {"_raw", "_pending_review", "_unidentified"}  # carpetas internas del curator
+_HEX_RE       = re.compile(r'^[0-9a-f]{8,}$')  # hash hex generado por curator (ej. 23e24f836e)
 
 
 # ── utilidades ─────────────────────────────────────────────────────────────────
@@ -76,7 +78,7 @@ def species_from_filename(path: Path) -> str:
     Quita el último token si es numérico (el photo_id).
     """
     parts = path.stem.split("_")
-    if len(parts) > 1 and parts[-1].isdigit():
+    if len(parts) > 1 and (parts[-1].isdigit() or _HEX_RE.match(parts[-1])):
         parts = parts[:-1]
     return "_".join(parts)
 
@@ -136,11 +138,13 @@ def collect_images(sources: List[Path]) -> List[Path]:
 
 
 def default_source() -> Path:
-    """staging/ si tiene imágenes (salida curada); si no, downloads/."""
-    if STAGING_DIR.is_dir() and any(
-        f.suffix.lower() in IMG_EXTS for f in STAGING_DIR.rglob("*") if f.is_file()
-    ):
-        return STAGING_DIR
+    """staging/ si sus carpetas de clase tienen imágenes; si no, downloads/."""
+    for diet in DIET_CLASSES:
+        diet_dir = STAGING_DIR / diet
+        if diet_dir.is_dir() and any(
+            f.suffix.lower() in IMG_EXTS for f in diet_dir.rglob("*") if f.is_file()
+        ):
+            return STAGING_DIR
     return DOWNLOADS_DIR
 
 

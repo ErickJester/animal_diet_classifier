@@ -1,10 +1,10 @@
 {
   "Allosaurus fragilis": {
-    "applied": "carnivore",
-    "confidence": 0.73,
-    "evidence": "menciones → carnivore:8  herbivore:3  omnivore:0",
+    "applied": null,
+    "confidence": 0.0,
+    "evidence": "sin artículo de Wikipedia",
     "source": "https://en.wikipedia.org/wiki/Allosaurus_fragilis",
-    "suggested_diet": "carnivore"
+    "suggested_diet": null
   },
   "Ankylosaurus magniventris": {
     "applied": null,
@@ -28,23 +28,23 @@
     "suggested_diet": null
   },
   "Brontosaurus excelsus": {
-    "applied": "herbivore",
-    "confidence": 0.8,
-    "evidence": "menciones → carnivore:1  herbivore:4  omnivore:0",
+    "applied": null,
+    "confidence": 0.0,
+    "evidence": "sin artículo de Wikipedia",
     "source": "https://en.wikipedia.org/wiki/Brontosaurus_excelsus",
-    "suggested_diet": "herbivore"
+    "suggested_diet": null
   },
   "Deinonychus antirrhopus": {
-    "applied": "carnivore",
-    "confidence": 0.71,
-    "evidence": "menciones → carnivore:5  herbivore:2  omnivore:0",
+    "applied": null,
+    "confidence": 0.0,
+    "evidence": "sin artículo de Wikipedia",
     "source": "https://en.wikipedia.org/wiki/Deinonychus_antirrhopus",
-    "suggested_diet": "carnivore"
+    "suggested_diet": null
   },
   "Diplodocus carnegii": {
     "applied": null,
     "confidence": 0.0,
-    "evidence": "el artículo no menciona la dieta",
+    "evidence": "sin artículo de Wikipedia",
     "source": "https://en.wikipedia.org/wiki/Diplodocus_carnegii",
     "suggested_diet": null
   },
@@ -63,46 +63,46 @@
     "suggested_diet": null
   },
   "Mammuthus primigenius": {
-    "applied": null,
-    "confidence": 0.0,
-    "evidence": "sin artículo de Wikipedia",
+    "applied": "herbivore",
+    "confidence": 1.0,
+    "evidence": "menciones → carnivore:0  herbivore:3  omnivore:0",
     "source": "https://en.wikipedia.org/wiki/Mammuthus_primigenius",
-    "suggested_diet": null
+    "suggested_diet": "herbivore"
   },
   "Megatherium americanum": {
     "applied": null,
-    "confidence": 0.0,
-    "evidence": "sin artículo de Wikipedia",
+    "confidence": 0.5,
+    "evidence": "menciones → carnivore:0  herbivore:1  omnivore:1",
     "source": "https://en.wikipedia.org/wiki/Megatherium_americanum",
-    "suggested_diet": null
+    "suggested_diet": "herbivore"
   },
   "Smilodon fatalis": {
     "applied": null,
-    "confidence": 0.59,
-    "evidence": "menciones → carnivore:13  herbivore:9  omnivore:0",
+    "confidence": 0.0,
+    "evidence": "sin artículo de Wikipedia",
     "source": "https://en.wikipedia.org/wiki/Smilodon_fatalis",
-    "suggested_diet": "carnivore"
+    "suggested_diet": null
   },
   "Spinosaurus aegyptiacus": {
-    "applied": "carnivore",
-    "confidence": 0.67,
-    "evidence": "menciones → carnivore:8  herbivore:3  omnivore:1",
+    "applied": null,
+    "confidence": 0.0,
+    "evidence": "sin artículo de Wikipedia",
     "source": "https://en.wikipedia.org/wiki/Spinosaurus_aegyptiacus",
-    "suggested_diet": "carnivore"
+    "suggested_diet": null
   },
   "Stegosaurus stenops": {
-    "applied": "herbivore",
-    "confidence": 1.0,
-    "evidence": "menciones → carnivore:0  herbivore:6  omnivore:0",
+    "applied": null,
+    "confidence": 0.0,
+    "evidence": "sin artículo de Wikipedia",
     "source": "https://en.wikipedia.org/wiki/Stegosaurus_stenops",
-    "suggested_diet": "herbivore"
+    "suggested_diet": null
   },
   "Triceratops horridus": {
-    "applied": "herbivore",
-    "confidence": 1.0,
-    "evidence": "menciones → carnivore:0  herbivore:2  omnivore:0",
+    "applied": null,
+    "confidence": 0.0,
+    "evidence": "sin artículo de Wikipedia",
     "source": "https://en.wikipedia.org/wiki/Triceratops_horridus",
-    "suggested_diet": "herbivore"
+    "suggested_diet": null
   },
   "Tyrannosaurus rex": {
     "applied": "carnivore",
